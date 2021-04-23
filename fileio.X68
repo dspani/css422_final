@@ -14,6 +14,8 @@ START:
     MOVE.B  #53,D0              
     TRAP    #15                 ;READ FROM FILE TRAP TASK 53
     
+    ; DOES NOT WORK
+    ; assumed addressing error
     LEA     OUTPUT,A1           ;LOAD ADDRESS OF OUTPUT STRING INTO A1
     MOVE.B  #30,D2              ;TELL TRAP TASK 54 TO WRITE #30 BYTES
     MOVE.B  #54,D0              
@@ -21,7 +23,7 @@ START:
     
     MOVE.B  #50,D0
     TRAP    #15                 ;CLOSE ALL FILES TRAP TASK 50
-    
+    ; DOES NOT WORK
     
     
 
