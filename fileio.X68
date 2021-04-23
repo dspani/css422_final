@@ -5,20 +5,31 @@
 * Description: Test file input and output
 *-----------------------------------------------------------
     ORG    $1000
-START:                  ; first instruction of program
-    LEA     FILE,A1     ;LOAD FILE NAME INTO A1
+START:                          
+    LEA     FILE,A1             ;LOAD FILE NAME INTO A1
     MOVE.B  #51,D0
-    TRAP    #15
+    TRAP    #15                 ;OPEN FILE TRAP TASK 51
     
-    MOVE.B  #120,D2
-    MOVE.B  #53,D0
-    TRAP    #15
+    MOVE.B  #120,D2             ;TELL TRAP TASK 53 TO READ #120 BYTES
+    MOVE.B  #53,D0              
+    TRAP    #15                 ;READ FROM FILE TRAP TASK 53
+    
+    LEA     OUTPUT,A1           ;LOAD ADDRESS OF OUTPUT STRING INTO A1
+    MOVE.B  #30,D2              ;TELL TRAP TASK 54 TO WRITE #30 BYTES
+    MOVE.B  #54,D0              
+    TRAP    #15                 ;WRITE TO FILE TRAP TASK 54
+    
+    MOVE.B  #50,D0
+    TRAP    #15                 ;CLOSE ALL FILES TRAP TASK 50
+    
+    
     
 
-* Put variables and constants here
+* variables and constants
+OUTPUT  DC.B    'and Microsoft WordPad and Apple TextEdit can optionally save files as TXT files.',0
 FILE    DC.B    'file.txt',0
-ABC     DC.B    'HELLO',0
-    END    START        ; last line of source
+ABC     DC.B    'HELLO',0       ;WILL OVERWRITE ONCE BYTES READ FROM FILE
+    END    START
 
 *~Font name~Courier New~
 *~Font size~16~
