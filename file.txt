@@ -1,0 +1,1 @@
+A TXT file is a standard text document that contains plain text. ... Windows and macOS both include simple text editors that can save text documents as TXT files. Microsoft Notepad saves documents as TXT files by default, and Microsoft WordPad and Apple TextEdit can optionally save files as TXT files.
