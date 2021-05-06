@@ -167,13 +167,6 @@ MOVE_SIZE:
     ;CMP.B  #%00000010,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
     ;BEQ    LONG_SIZE               ;GOES TO BRANCH FOR LONG SIZE
 
-
-
-
-;asdadfasdfasdfasdfasdf test test delete 
-
-    
-    
     
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
