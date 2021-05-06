@@ -22,7 +22,6 @@ GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
     MOVE.W  D1, INSTRUCTION_LENGTH  ; MOVE STRING LENGTH TO D5
 
     RTS                             ; RETURN TO STACK ADDRESS
-
 **--------------CONVERSION ASCII TO HEX LOGIC------------**
 ;-------------------------------------
 ; CONVERT ASCII INPUT STRING TO HEX
@@ -34,7 +33,8 @@ GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
 ;------------------------------------
 ASCII_TO_HEX:
     ;LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
-    ;LEA     INSTRUCTION, A2         ; WHERE END INSTRUCTION WILL LIE
+    ;LEA     INSTRUCTION, A2
+
     MOVE.W  (A1)+, D1               ; MOVE INSTRUCTION BYTE TO D1
     MOVE.W  D1, D2
     BSR     SPLIT_VALS              ; SPLIT VALUE INTO 2 SEPERATE BYTES
@@ -53,16 +53,16 @@ SPLIT_VALS:
 
 CONVERSION_LOOP:
     CMP.B   #0, D1 
-    BEQ     END_INSTRUCTION         ; BRANCH TO INPUT ERROR IF NULL INSTRUCTION
+    BEQ     END_INSTRUCTION           ; BRANCH TO INPUT ERROR IF NULL INSTRUCTION
     CMP.B   #47, D1
-    BLT     INPUT_ERROR             ; ERROR IF VALUE LESS THAN 47
+    BLT     INPUT_ERROR               ; ERROR IF VALUE LESS THAN 47
     CMP.B   #71, D1
-    BGT     INPUT_ERROR             ; ERROR IF VALUE GREATER THAN 71
+    BGT     INPUT_ERROR               ; ERROR IF VALUES GREATER THAN 71
     CMP.B   #57, D1
-    BLE     NUMBER                  ; NUMBER IF VALUE BETWEEN 48 AND 57
+    BLE     NUMBER                    ; NUMBER IF VALUE BETWEEN 48 AND 57
     CMP.B   #65, D1
-    BGE     LETTER                  ; LETTER IF VALUE BETWEEN 65 AND 70
-    BRA     INPUT_ERROR 
+    BGE     LETTER                    ; LETTER IF VALUE BETWEEN 65 AND 70
+    RTS 
 
 COMBINE_BYTE:
     MOVE.B  #0, D4                  ; CLEAR D4
@@ -98,13 +98,13 @@ LETTER:
     MOVE.B  (A1)+, D2               ; DEREFERENCE NEW VALUE AND PLACE INTO D2
     BRA     CONVERSION_LOOP
 **----------END CONVERSION ASCII TO HEX LOGIC------------**
-  
 INPUT_ERROR:
     LEA     ERROR, A1
     MOVE.B  #13, D0
     TRAP    #15                     ; PRINT ERROR MESSAGE ON INSTRUCTION ERROR
     BRA     MAIN                    ; RETURN TO MAIN
 
+**--------------GET ADDRESSING----------------**
 INPUT_START_ADDRESS:
     LEA     GET_START_ADDRESS, A1
     MOVE.B  #14, D0
@@ -124,15 +124,16 @@ INPUT_END_ADDRESS:
     LEA     END_ADDRESS , A2
     BSR     ASCII_TO_HEX
     RTS
-    
+**------------END GET ADDRESSING------------**
+
 MAIN:                               ; MAIN LOOP
     BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
     BSR     ASCII_TO_HEX            ; RETURNS INSTRUCTION AT INSTRUCTION ADDRESS
     LEA     INSTRUCTION, A1
     MOVE.W  (A1)+, D1
-    CMP.W   #$4E75, D1
+    CMP.W   #$4E75, D1              ; COMPARE TO CONSTANT RTS OP CODE
     BEQ     RTS
-    CMP.W   #$4E71, D1
+    CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
     BRA     MAIN                    ; RESTART LOOP
     
@@ -149,7 +150,6 @@ NOP:
     TRAP    #15                     ; PRINT NOP OP CODE
     BRA     MAIN
 **-----------END INSTRUCTION DISASSEMBLY----------**
-
 
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
@@ -242,6 +242,7 @@ START_ADDRESS       DS.L    1       ; DECLARE START ADDRESS
 END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 
     END    START        
+
 
 
 
