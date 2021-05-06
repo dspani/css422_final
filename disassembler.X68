@@ -20,6 +20,7 @@ GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
 
     RTS                             ; RETURN TO STACK ADDRESS
 
+**--------------CONVERSION LOGIC------------**
 ;-------------------------------------
 ; CONVERT ASCII INPUT STRING TO HEX
 ; ASCII NUMS 0-9 = 48-57 -- sub.b 48, val
@@ -28,74 +29,74 @@ GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
 ASCII_TO_HEX:
     LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
     LEA     INSTRUCTION, A2
-    MOVE.W  (A1)+, D1                ; MOVE INSTRUCTION BYTE TO D1
+    MOVE.W  (A1)+, D1               ; MOVE INSTRUCTION BYTE TO D1
     MOVE.W  D1, D2
-    BSR     SPLIT_VALS
+    BSR     SPLIT_VALS              ; SPLIT VALUE INTO 2 SEPERATE BYTES
     MOVE.B  #0, D4
     BSR     CONVERSION_LOOP
     
 SPLIT_VALS:
-    LSR.L   #8, D1
+    LSR.L   #8, D1                  ; SHIFT LAST BYTE OUT OF D1
+    LSL.L   #8, D2                  
     LSL.L   #8, D2
-    LSL.L   #8, D2
-    LSL.L   #8, D2
+    LSL.L   #8, D2                  ; SHIFT FIRST BYTE OUT OF D2
     LSR.L   #8, D2
     LSR.L   #8, D2
-    LSR.L   #8, D2
+    LSR.L   #8, D2                  ; RETURN D2 TO FRONT OF REGISTER
     RTS
 
 CONVERSION_LOOP:
     CMP.B   #0, D1 
     BEQ     END_INSTRUCTION           ; BRANCH TO INPUT ERROR IF NULL INSTRUCTION
     CMP.B   #47, D1
-    BLT     INPUT_ERROR
+    BLT     INPUT_ERROR               ; ERROR IF VALUE LESS THAN 47
     CMP.B   #71, D1
-    BGT     INPUT_ERROR
+    BGT     INPUT_ERROR               ; ERROR IF VALUES GREATER THAN 71
     CMP.B   #57, D1
-    BLE     NUMBER
+    BLE     NUMBER                    ; NUMBER IF VALUE BETWEEN 48 AND 57
     CMP.B   #65, D1
-    BGE     LETTER
+    BGE     LETTER                    ; LETTER IF VALUE BETWEEN 65 AND 70
     RTS 
 
 COMBINE_BYTE:
-    MOVE.B  #0, D4
-    MOVE.B  D5, (A2)
-    MOVE.B  #0, D5
-    ADD.L   #1, A2
-    MOVE.B  (A1)+, D2
+    MOVE.B  #0, D4                  ; CLEAR D4
+    MOVE.B  D5, (A2)                ; MOVE D5 INTO INSTRUCTION MEMORY
+    MOVE.B  #0, D5                  ; CLEAR D5
+    ADD.L   #1, A2                  ; INCREMENT A2 ADDRESS
+    MOVE.B  (A1)+, D2               ; GRAB NEW VALUE FROM A1, PLACE IN D2
     BRA CONVERSION_LOOP
 
 END_INSTRUCTION:
-    BRA INSTRUCTION_DONE
+    BRA INSTRUCTION_DONE            ; RETURN TO MAIN
 
 NUMBER:
-    SUB.B   #48, D1
-    LSL.B   #4, D5
-    ADD.B   D1, D5
-    MOVE.B  D2, D1
-    ADD.B   #1, D4 
-    CMP.B   #2, D4
-    BEQ     COMBINE_BYTE
-    MOVE.B  (A1)+, D2   
+    SUB.B   #48, D1                 ; CONVERT ASCII NUM TO HEX VALUE
+    LSL.B   #4, D5                  ; LEFT SHIFT D5
+    ADD.B   D1, D5                  ; MOVE D1 INTO D5
+    MOVE.B  D2, D1                  ; QUEUE D2 INTO D1 FOR CONVERSION
+    ADD.B   #1, D4                  ; INCREMENT COUNTER IN D4
+    CMP.B   #2, D4                  
+    BEQ     COMBINE_BYTE            ; BRANCH IF COUNTER IS 2
+    MOVE.B  (A1)+, D2               ; DEREFERENCE NEW VALUE AND PLACE INTO D2
     BRA     CONVERSION_LOOP
     
 LETTER:
-    SUB.B   #55, D1
-    LSL.B   #4, D5
-    ADD.B   D1, D5
-    MOVE.B  D2, D1
-    ADD.B   #1, D4 
-    CMP.B   #2, D4
-    BEQ     COMBINE_BYTE
-    MOVE.B  (A1)+, D2   
+    SUB.B   #55, D1                 ; CONVERT ASCII NUM TO HEX VALUE
+    LSL.B   #4, D5                  ; LEFT SHIFT D5
+    ADD.B   D1, D5                  ; MOVE D1 INTO D5
+    MOVE.B  D2, D1                  ; QUEUE D2 INTO D1 FOR CONVERSION
+    ADD.B   #1, D4                  ; INCREMENT COUNTER IN D4
+    CMP.B   #2, D4                  
+    BEQ     COMBINE_BYTE            ; BRANCH IF COUNTER IS 2
+    MOVE.B  (A1)+, D2               ; DEREFERENCE NEW VALUE AND PLACE INTO D2
     BRA     CONVERSION_LOOP
     
     
 INPUT_ERROR:
     LEA     ERROR, A1
     MOVE.B  #13, D0
-    TRAP    #15
-    BRA     MAIN
+    TRAP    #15                     ; PRINT ERROR MESSAGE ON INSTRUCTION ERROR
+    BRA     MAIN                    ; RETURN TO MAIN
 
 MAIN:                               ; MAIN LOOP
     BSR     GET_INSTRUCTION
