@@ -152,7 +152,29 @@ NOP:
     TRAP    #15                     ; PRINT NOP OP CODE
     BRA     MAIN
 **-----------END INSTRUCTION DISASSEMBLY----------**
+MOVE_SIZE:
+    
+    ;LSL.L    #2,A2                 ;SHIFT LEFT BY 2 BITS TO GET RID OF FIRST 2 BITS
+    ;LSR.L    #8,A2                 ;SHIFT RIGHT BY 8 WHERE WE ARE STORING THE INSTRUCTION
+    ;LSR.L    #6,A2                 ;SHIFT RIGHT BY 6 WHERE WE ARE STORING THE INSTRUCTION
+    
+    ;CMP.B  #%00000001,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    BYTE_SIZE               ;GOES TO BRANCH FOR BYTE SIZE
 
+    ;CMP.B  #%00000011,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    WORD_SIZE               ;GOES TO BRANCH FOR WORD SIZE
+    
+    ;CMP.B  #%00000010,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    LONG_SIZE               ;GOES TO BRANCH FOR LONG SIZE
+
+
+
+
+;asdadfasdfasdfasdfasdf test test delete 
+
+    
+    
+    
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
@@ -244,6 +266,7 @@ START_ADDRESS       DS.L    1       ; DECLARE START ADDRESS
 END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 
     END    START        
+
 
 
 
