@@ -6,11 +6,61 @@
 *-----------------------------------------------------------
     ORG    $1000
 START:
-    ; BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
+    ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
-    
+
+RUN_TESTS:
+    ;BSR     TEST_1
+    BSR     TEST_2
+    BSR     TEST_3
+    BSR     TEST_4
+    BSR     TEST_5
+    SIMHALT
+
+; TESTS ASCII_TO_HEX
+TEST_1:
+    MOVE.W  #$3939, TEST_VAR_1          ; LOADS "99" ASCII CHAR IN HEX TO TEST_VAR_1
+    LEA     TEST_VAR_1, A1
+    LEA     TEST_VAR_2, A2
+    BSR     ASCII_TO_HEX                ; EXPECTED: 99
+    CMP.W   #99, TEST_VAR_2
+    ; TODO: ADD ASSERTION HERE
+    RTS
+
+TEST_2:
+    MOVE.L  #$30393900, TEST_VAR_1      ; LOADS "099" ASCII CHAR IN HEX TO TEST_VAR_1
+    LEA     TEST_VAR_1, A1
+    LEA     TEST_VAR_2, A2
+    BSR     ASCII_TO_HEX                ; EXPECTED: 09
+    ; TODO: ADD ASSERTION HERE
+    RTS
+
+TEST_3:
+    MOVE.L  #$31317070, TEST_VAR_1      ; LOADS "00FF" ASCII CHAR IN HEX TO TEST_VAR_1
+    LEA     TEST_VAR_1, A1
+    LEA     TEST_VAR_2, A2
+    BSR     ASCII_TO_HEX                ; EXPECTED: 00FF
+    ; TODO: ADD ASSERTION HERE
+    RTS
+
+TEST_4:
+    MOVE.L  #$3942FFFF, TEST_VAR_1      ; LOADS "9B00" ASCII CHAR IN HEX TO TEST_VAR_1
+    LEA     TEST_VAR_1, A1
+    LEA     TEST_VAR_2, A2
+    BSR     ASCII_TO_HEX                ; EXPECTED: 9B
+    ; TODO: ADD ASSERTION HERE
+    RTS
+
+TEST_5:
+    MOVE.W  #$5842, TEST_VAR_1          ; LOADS "XA" ASCII CHAR IN HEX TO TEST_VAR_1
+    LEA     TEST_VAR_1, A1
+    LEA     TEST_VAR_2, A2
+    BSR     ASCII_TO_HEX                ; EXPECTED: INPUT ERROR
+    ; TODO: ADD ASSERTION HERE
+    RTS
+
 **--------GET INSTRUCTION FROM USER---------**
 GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
     LEA     INSTRUCTION_PROMPT, A1  ; LOAD PROMPT INTO A1
@@ -41,8 +91,8 @@ ASCII_TO_HEX:
     MOVE.B  (A1)+, D1                ; MOVE FIRST BYTE TO D1
     MOVE.B  (A1)+, D2                ; MOVE NEXT BYTE TO D2
     MOVE.B  #0, D4                   ; SET COUNTER TO 0
-    BSR     CONVERSION_LOOP
-    
+    ;BSR     CONVERSION_LOOP
+    BRA     CONVERSION_LOOP
 
 CONVERSION_LOOP:
     CMP.B   #0, D1 
@@ -57,8 +107,9 @@ CONVERSION_LOOP:
     BLE     NUMBER                    ; NUMBER IF VALUE BETWEEN 48 AND 57
     CMP.B   #65, D1
     BGE     LETTER                    ; LETTER IF VALUE BETWEEN 65 AND 70
-    RTS 
-
+    ;RTS 
+    BRA     INPUT_ERROR
+    
 COMBINE_BYTE:
     MOVE.B  #0, D4                  ; CLEAR D4
     MOVE.B  D5, (A2)                ; MOVE D5 INTO INSTRUCTION MEMORY
@@ -96,7 +147,8 @@ INPUT_ERROR:
     LEA     ERROR, A1
     MOVE.B  #13, D0
     TRAP    #15                     ; PRINT ERROR MESSAGE ON INSTRUCTION ERROR
-    BRA     MAIN                    ; RETURN TO MAIN
+    ;BRA     MAIN                    ; RETURN TO MAIN (TODO: RETURN TO ORIGINAL LOCATION)
+    RTS
 
 **--------------GET ADDRESSING----------------**
 INPUT_START_ADDRESS:
@@ -119,20 +171,6 @@ INPUT_END_ADDRESS:
     BSR     ASCII_TO_HEX
     RTS
 **------------END GET ADDRESSING------------**
-
-; TESTS ASCII_TO_HEX
-TEST_1:
-    MOVE.W  #$3939, TEST_VAR_1        ; LOADS "9" ASCII CHAR IN HEX TO TEST_VAR_1
-    LEA     TEST_VAR_1, A1
-    LEA     TEST_VAR_2, A2
-    BSR     ASCII_TO_HEX
-    ; TODO: ADD ASSERTION HERE
-    RTS
-    
-
-RUN_TESTS:
-    BSR     TEST_1
-    SIMHALT
 
 MAIN:                               ; MAIN LOOP
     BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
@@ -257,6 +295,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
