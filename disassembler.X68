@@ -184,21 +184,31 @@ MAIN:                               ; MAIN LOOP
     BEQ     RTS
     CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
+    BSR     CLEAR_INSTRUCTION       ; CLEAR MEMORY OF INSTRUCTION
     BRA     MAIN                    ; RESTART LOOP
     SIMHALT
+
+CLEAR_INSTRUCTION:
+    LEA     INSTRUCTION, A1
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    BRA     MAIN
 
 **-----------BEGIN INSTRUCTION DISASSEMBLY----------**
 RTS:
     LEA     OPC_RTS, A1
     MOVE.B  #13, D0
     TRAP    #15                     ; PRINT RTS OP CODE
-    BRA     MAIN
+    BRA     CLEAR_INSTRUCTION
     
 NOP:
     LEA     OPC_NOP, A1
     MOVE.B  #13, D0
     TRAP    #15                     ; PRINT NOP OP CODE
-    BRA     MAIN
+    BRA     CLEAR_INSTRUCTION
 **-----------END INSTRUCTION DISASSEMBLY----------**
 
 **------------------VARIABLES---------------------**
@@ -296,6 +306,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
