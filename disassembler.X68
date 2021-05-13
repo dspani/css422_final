@@ -7,8 +7,8 @@
     ORG    $1000
 START:
     ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
-    BSR     INPUT_START_ADDRESS
-    BSR     INPUT_END_ADDRESS                
+    ;BSR     INPUT_START_ADDRESS
+    ;BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
@@ -172,8 +172,27 @@ INPUT_END_ADDRESS:
     BSR     ASCII_TO_HEX
     RTS
 **------------END GET ADDRESSING------------**
+**--------------GET NYBBLE----------------**
+;-------------------------------------
+; ** GET FIRST NYBBLE
+; ** ARGUMENTS:
+; D1: SOURCE REGISTER
+;   D1 STORES INSTRUCTION
+; ** RETURNS:
+; D1:
+;   D1 SAVES TO FIRST_FOUR_NYBBLE
+;------------------------------------
+GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS 
 
-MAIN:                               ; MAIN LOOP
+    MOVE.W  #$F000, D2  ; mask = $F000
+    AND.W   D2, D1
+    
+    LSR.W   #8, D1  
+    LSR.W   #4, D1
+    MOVE.B  D1, FIRST_FOUR_NYBBLE
+  
+
+MAIN:                               ; MAIN LOOP    
     BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
     LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
     LEA     INSTRUCTION, A2         ; LOAD DESTINATION 
@@ -185,6 +204,7 @@ MAIN:                               ; MAIN LOOP
     CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
     BSR     CLEAR_INSTRUCTION       ; CLEAR MEMORY OF INSTRUCTION
+      
     BRA     MAIN                    ; RESTART LOOP
     SIMHALT
 
@@ -298,6 +318,7 @@ GET_END_ADDRESS     DC.B    'ENTER END ADDRESS IN HEX: ', 0
 TEST_FAIL           DC.B    'ASSERT FAILED: ', 0           
 TEST_SUCC           DC.B    'ASSERT SUCCESSFUL: ', 0
 
+FIRST_FOUR_NYBBLE   DS.B    1       ; DECLARE 1 BYTE FOR LENGTH 
 INSTRUCTION_LENGTH  DS.B    1       ; DECLARE 1 BYTE FOR LENGTH
 ASCII_INSTRUCTION   DS.W    10      ; DECLARE UP TO 10 WORDS FOR ASCII INSTRUCTION
 INSTRUCTION         DS.W    5       ; DECLARE UP TO 5 WORDS FOR HEX INSTRUCTION
@@ -311,7 +332,8 @@ TEST_VAR_2          DS.L    1       ; FOR TESTING
 
 
 
+
 *~Font name~Courier New~
-*~Font size~16~
+*~Font size~12~
 *~Tab type~1~
 *~Tab size~4~
