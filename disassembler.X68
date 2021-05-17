@@ -6,21 +6,26 @@
 *-----------------------------------------------------------
     ORG    $1000   
 START:
-    ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
+    BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
-    ;BSR     TEST_1
-    BSR     TEST_2
-    BSR     TEST_3
-    BSR     TEST_4
-    BSR     TEST_5
+    BSR     GET_BITS_TEST_1
+    ;BSR     GET_BITS_TEST_2
+    ;BSR     GET_BITS_TEST_3
+    ;BSR     GET_BITS_TEST_4
+    ;BSR     GET_BITS_TEST_5
+    ;BSR     ASCII_TO_HEX_TEST_1
+    ;BSR     ASCII_TO_HEX_TEST_2
+    ;BSR     ASCII_TO_HEX_TEST_3
+    ;BSR     ASCII_TO_HEX_TEST_4
+    ;BSR     ASCII_TO_HEX_TEST_5
     SIMHALT
 
 ; TESTS ASCII_TO_HEX
-TEST_1:
+ASCII_TO_HEX_TEST_1:
     MOVE.W  #$3939, TEST_VAR_1          ; LOADS "99" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -29,7 +34,7 @@ TEST_1:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_2:
+ASCII_TO_HEX_TEST_2:
     MOVE.L  #$30393900, TEST_VAR_1      ; LOADS "099" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -37,7 +42,7 @@ TEST_2:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_3:
+ASCII_TO_HEX_TEST_3:
     MOVE.L  #$31317070, TEST_VAR_1      ; LOADS "00FF" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -45,7 +50,7 @@ TEST_3:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_4:
+ASCII_TO_HEX_TEST_4:
     MOVE.L  #$3942FFFF, TEST_VAR_1      ; LOADS "9B00" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -53,12 +58,47 @@ TEST_4:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_5:
+ASCII_TO_HEX_TEST_5:
     MOVE.W  #$5842, TEST_VAR_1          ; LOADS "XA" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: INPUT ERROR
     ; TODO: ADD ASSERTION HERE
+    RTS
+
+GET_BITS_TEST_1:
+    MOVE.W  #%0001000000000001, D1      ; LOAD HEX: 1001 (MOVE.B  D1, D0)
+    MOVE.B  #0, D2                      ; START FROM 0
+    MOVE.B  #16, D3                     ; GET 16 BITS OR A WORD
+    BSR     GET_BITS                    ; EXPECTS D1: 1001
+    RTS
+
+GET_BITS_TEST_2:
+    MOVE.W  #%0001000000000010, D1      ; LOAD HEX: 1002 (MOVE.B  D2, D0)
+    MOVE.B  #0, D2                      ; START FROM 0
+    MOVE.B  #4, D3                      ; GET 4 BITS OR A NYBBLE
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_3:
+    MOVE.W  #$1013, D1                  ; LOAD HEX: 1013
+    MOVE.B  #8, D2                      ; START FROM 4
+    MOVE.B  #4, D3                      ; GET 4 BITS OR A NYBBLE
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_4:
+    MOVE.W  #%1010101010101010, D1      ; LOAD HEX: AAAA
+    MOVE.B  #10, D2                     ; START FROM 10
+    MOVE.B  #1, D3                      ; GET 1 BIT
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_5:
+    MOVE.W  #$00FC, D1                  ; LOAD HEX: 00FC
+    MOVE.B  #15, D2                     ; START FROM 15
+    MOVE.B  #1, D3                      ; GET 1 BIT
+    BSR     GET_BITS                    ; EXPECTS D1: 0
     RTS
 
 **--------GET INSTRUCTION FROM USER---------**
@@ -191,6 +231,7 @@ GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS
     
     LSR.W   #8, D1  
     LSR.W   #4, D1
+
     MOVE.B  D1, FIRST_FOUR_NYBBLE   
 
 MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instruction branch       
@@ -293,7 +334,48 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     
 **------------------END OF APIs----------------**    
 
+    MOVE.B  D1, FIRST_FOUR_NYBBLE
+
+**--------------GET BITS----------------**
+;-------------------------------------
+; ** GET N NUMBER OF BITS BASED X STARTING LOCATION
+; ** REPLICATION OF "INT GETBITS(SHORT INSTRUCTION, INT START, INT END)"
+; ** ARGUMENTS:
+; D1: SOURCE INSTRCUTION
+;   D1 STORES THE BASE WORD INSTRUCTION
+; D2: STARTING LOCATION
+;   X STARTING LOCATION FROM LEFT TO RIGHT IN BASE INSTRUCTION
+; D3: NUMBER OF BITS TO GET
+;   N NUMBER OF BITS TO GET STARTING FROM D2 STARTING LOCATION
+; ** RETURNS:
+; D1:
+;   D1 CONTAINS ONLY THE BITS STARTING FROM X SHIFTED ALL THE WAY TO THE RIGHT
+;------------------------------------
+GET_BITS: 
+	MOVE.W #16, D4                  ; MOVE WORD SIZE INTO D4
+	SUB.W D3, D4                    ; GET NUM OF BITS AFTER IMPORTANT BITS
+	
+	MOVE.W D2, D5                   ; MOVE STARTING LOCATION TO D5
+	MOVE.W D3, D6                   ; MOVE NUMBER OF BITS TO D6
+	LEFT_SHIFT:
+	CMP.W #0, D2                    ; COMPARE 0 TO STARTING LOCATION
+	BEQ RIGHT_SHIFT                 ; BRANCH TO RIGHT SHIFT IS LEFT_SHIFT
+	SUB.W #1, D2                    ; DECREMENT COUNTER BY 1
+	LSL.W #1, D1                    ; LEFT SHIFT INSTRUCTION BY 1
+
+	BRA LEFT_SHIFT                  ; RESTART LEFT SHIFT
+	RIGHT_SHIFT:
+	CMP.W #0, D4                    ; COMPARE 0 TO D4 REGISTER
+	BEQ GET_BITS_END                ; IF 0 END BIT SHIFT
+	SUB.W #1, D4                    ; DECREMENT D4 COUNTER BY 1
+	LSR.W #1, D1                    ; RIGHT SHIFT INSTRUCTION BY 1
+	BRA RIGHT_SHIFT                 ; RESTART RIGHT SHIFT
+    GET_BITS_END:
+    RTS                             ; HELPER FUNCTION
+
+
 MAIN:                               ; MAIN LOOP    
+
     BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
     LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
     LEA     INSTRUCTION, A2         ; LOAD DESTINATION 
@@ -301,6 +383,7 @@ MAIN:                               ; MAIN LOOP
     LEA     INSTRUCTION, A1
     MOVE.W  (A1)+, D1               ; DEREFERENCE WORD INSTRUCTION
     CMP.W   #$4E75, D1              ; COMPARE TO CONSTANT RTS OP CODE
+    MOVE.W  D1, D7                  ; MOVE INSTRUCTION TO D7 FOR LONG-TERM USE
     BEQ     RTS
     CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
