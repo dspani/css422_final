@@ -4,7 +4,7 @@
 * Date       : Spring 2021
 * Description: Disassembler Project, CSS 422
 *-----------------------------------------------------------
-    ORG    $1000
+    ORG    $1000   
 START:
     ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
@@ -182,6 +182,8 @@ INPUT_END_ADDRESS:
 ; D1:
 ;   D1 SAVES TO FIRST_FOUR_NYBBLE
 ;------------------------------------
+
+**------------------START OF APIs----------------** 
 GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS 
 
     MOVE.W  #$F000, D2  ; mask = $F000
@@ -189,8 +191,107 @@ GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS
     
     LSR.W   #8, D1  
     LSR.W   #4, D1
-    MOVE.B  D1, FIRST_FOUR_NYBBLE
-  
+    MOVE.B  D1, FIRST_FOUR_NYBBLE   
+
+MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instruction branch       
+    MOVE.L  D7, D5
+    ADD.W   #%1100000000000000, D5
+    CMP.W   #$0000, D2
+    BEQ     MOVE
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111111000000, D5
+    CMP.W   #%0100111010000000, D5
+    BEQ     JSR
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111101110000000, D5
+    CMP.W   #%0100100010000000, D5
+    BEQ     MOVEM
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000111000000, D5
+    CMP.W   #%0100000111000000, D5
+    BEQ     LEA
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111100000000, D5
+    CMP.W   #%0100011000000000, D5
+    BEQ     NOT
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111100000000, D5
+    CMP.W   #%0110110100000000, D5
+    BEQ     BLT
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111100000000, D5
+    CMP.W   #%0110110000000000, D5
+    BEQ     BGE
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111100000000, D5
+    CMP.W   #%0110011000000000, D5
+    BEQ     BEQ
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111111100000000, D5
+    CMP.W   #%0110000000000000, D5
+    BEQ     BRA
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000000000, D5
+    CMP.W   #%1000000000000000, D5
+    BEQ     DIVU
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000000000, D5
+    CMP.W   #%1001000000000000, D5
+    BEQ     SUB
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000111000000, D5
+    CMP.W   #%1100000111000000, D5
+    BEQ     MULS
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000000000, D5
+    CMP.W   #%1100000000000000, D5
+    BEQ     AND
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000000000, D5
+    CMP.W   #%1101000000000000, D5
+    BEQ     ADD
+    
+    ;CHANGE NAME FROM LSD1 AND LSD2 TO SOMETHING MORE SPECIFIC
+    MOVE.L  D7, D5
+    ADD.W   #%1111111011000000, D5
+    CMP.W   #%1110001011000000, D5
+    BEQ     LSD1
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000011000, D5
+    CMP.W   #%1110000000001000, D5
+    BEQ     LSD2
+    
+    ;CHANGE NAME FROM ASD1 AND ASD2 TO SOMETHING MORE SPECIFIC
+    MOVE.L  D7, D5
+    ADD.W   #%1111111011000000, D5
+    CMP.W   #%1110000011000000, D5
+    BEQ     ASD1
+    
+    MOVE.L  D7, D5
+    ADD.W   #%1111000000011000, D5
+    CMP.W   #%1110000000000000, D5
+    BEQ     ASD2
+    
+    ;BRANCH NO MATTER WHAT TO BCC, AS IT'S NOT VISIBLY UNIQUE TO MORTALS    
+    BRA     BCC
+    
+    
+    
+**------------------END OF APIs----------------**    
 
 MAIN:                               ; MAIN LOOP    
     BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
@@ -230,7 +331,22 @@ NOP:
     TRAP    #15                     ; PRINT NOP OP CODE
     BRA     CLEAR_INSTRUCTION
 **-----------END INSTRUCTION DISASSEMBLY----------**
+MOVE_SIZE:
+    
+    ;LSL.L    #2,A2                 ;SHIFT LEFT BY 2 BITS TO GET RID OF FIRST 2 BITS
+    ;LSR.L    #8,A2                 ;SHIFT RIGHT BY 8 WHERE WE ARE STORING THE INSTRUCTION
+    ;LSR.L    #6,A2                 ;SHIFT RIGHT BY 6 WHERE WE ARE STORING THE INSTRUCTION
+    
+    ;CMP.B  #%00000001,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    BYTE_SIZE               ;GOES TO BRANCH FOR BYTE SIZE
 
+    ;CMP.B  #%00000011,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    WORD_SIZE               ;GOES TO BRANCH FOR WORD SIZE
+    
+    ;CMP.B  #%00000010,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
+    ;BEQ    LONG_SIZE               ;GOES TO BRANCH FOR LONG SIZE
+
+    
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
@@ -327,6 +443,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
