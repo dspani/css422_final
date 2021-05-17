@@ -6,7 +6,7 @@
 *-----------------------------------------------------------
     ORG    $1000   
 START:
-    BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
+    ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
