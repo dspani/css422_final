@@ -6,21 +6,26 @@
 *-----------------------------------------------------------
     ORG    $1000
 START:
-    ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
+    BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
-    ;BSR     TEST_1
-    BSR     TEST_2
-    BSR     TEST_3
-    BSR     TEST_4
-    BSR     TEST_5
+    BSR     GET_BITS_TEST_1
+    ;BSR     GET_BITS_TEST_2
+    ;BSR     GET_BITS_TEST_3
+    ;BSR     GET_BITS_TEST_4
+    ;BSR     GET_BITS_TEST_5
+    ;BSR     ASCII_TO_HEX_TEST_1
+    ;BSR     ASCII_TO_HEX_TEST_2
+    ;BSR     ASCII_TO_HEX_TEST_3
+    ;BSR     ASCII_TO_HEX_TEST_4
+    ;BSR     ASCII_TO_HEX_TEST_5
     SIMHALT
 
 ; TESTS ASCII_TO_HEX
-TEST_1:
+ASCII_TO_HEX_TEST_1:
     MOVE.W  #$3939, TEST_VAR_1          ; LOADS "99" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -29,7 +34,7 @@ TEST_1:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_2:
+ASCII_TO_HEX_TEST_2:
     MOVE.L  #$30393900, TEST_VAR_1      ; LOADS "099" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -37,7 +42,7 @@ TEST_2:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_3:
+ASCII_TO_HEX_TEST_3:
     MOVE.L  #$31317070, TEST_VAR_1      ; LOADS "00FF" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -45,7 +50,7 @@ TEST_3:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_4:
+ASCII_TO_HEX_TEST_4:
     MOVE.L  #$3942FFFF, TEST_VAR_1      ; LOADS "9B00" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
@@ -53,12 +58,47 @@ TEST_4:
     ; TODO: ADD ASSERTION HERE
     RTS
 
-TEST_5:
+ASCII_TO_HEX_TEST_5:
     MOVE.W  #$5842, TEST_VAR_1          ; LOADS "XA" ASCII CHAR IN HEX TO TEST_VAR_1
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: INPUT ERROR
     ; TODO: ADD ASSERTION HERE
+    RTS
+
+GET_BITS_TEST_1:
+    MOVE.W  #%0001000000000001, D1      ; LOAD HEX: 1001 (MOVE.B  D1, D0)
+    MOVE.B  #0, D2                      ; START FROM 0
+    MOVE.B  #16, D3                     ; GET 16 BITS OR A WORD
+    BSR     GET_BITS                    ; EXPECTS D1: 1001
+    RTS
+
+GET_BITS_TEST_2:
+    MOVE.W  #%0001000000000010, D1      ; LOAD HEX: 1002 (MOVE.B  D2, D0)
+    MOVE.B  #0, D2                      ; START FROM 0
+    MOVE.B  #4, D3                      ; GET 4 BITS OR A NYBBLE
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_3:
+    MOVE.W  #$1013, D1                  ; LOAD HEX: 1013
+    MOVE.B  #8, D2                      ; START FROM 4
+    MOVE.B  #4, D3                      ; GET 4 BITS OR A NYBBLE
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_4:
+    MOVE.W  #%1010101010101010, D1      ; LOAD HEX: AAAA
+    MOVE.B  #10, D2                     ; START FROM 10
+    MOVE.B  #1, D3                      ; GET 1 BIT
+    BSR     GET_BITS                    ; EXPECTS D1: 1
+    RTS
+
+GET_BITS_TEST_5:
+    MOVE.W  #$00FC, D1                  ; LOAD HEX: 00FC
+    MOVE.B  #15, D2                     ; START FROM 15
+    MOVE.B  #1, D3                      ; GET 1 BIT
+    BSR     GET_BITS                    ; EXPECTS D1: 0
     RTS
 
 **--------GET INSTRUCTION FROM USER---------**
@@ -225,7 +265,7 @@ GET_BITS:
 	SUB.W #1, D4                    ; DECREMENT D4 COUNTER BY 1
 	LSR.W #1, D1                    ; RIGHT SHIFT INSTRUCTION BY 1
 	BRA RIGHT_SHIFT                 ; RESTART RIGHT SHIFT
-GET_BITS_END:
+    GET_BITS_END:
     RTS                             ; HELPER FUNCTION
 
 MAIN:                               ; MAIN LOOP    
