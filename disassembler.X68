@@ -335,8 +335,8 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     CMP.W   #%1110000000000000, D5
     BEQ     ASD_REGISTER
     
-    ;BRANCH NO MATTER WHAT TO BCC, AS IT'S NOT VISIBLY UNIQUE TO MORTALS    
-    BRA     BCC
+    ;BRANCH NO MATTER WHAT TO INVALID IF INSTRUCTION DOES NOT MATCH   
+    BRA     INVALID
       
 
 **--------------GET BITS----------------**
