@@ -1074,10 +1074,46 @@ S_ADDRESS_REG_INDIRECT:
     CMP.B   #$07, D1
     BEQ     PRINT_A7_IND
     BRA     INVALID
+    
 S_ADDRESS_REG_POSTINC:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_POSTINC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_POSTINC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_POSTINC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_POSTINC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_POSTINC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_POSTINC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_POSTINC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_POSTINC
+    BRA     INVALID
 
 S_ADDRESS_REG_PREDEC:
-
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_PREDEC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_PREDEC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_PREDEC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_PREDEC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_PREDEC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_PREDEC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_PREDEC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_PREDEC
+    BRA     INVALID
 S_IMM_ABS_WORD_LONG:
     ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
 
@@ -1162,9 +1198,43 @@ D_ADDRESS_REG_INDIRECT:
     BRA     INVALID
     
 D_ADDRESS_REG_POSTINC:
-
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_POSTINC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_POSTINC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_POSTINC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_POSTINC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_POSTINC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_POSTINC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_POSTINC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_POSTINC
+    BRA     INVALID
 D_ADDRESS_REG_PREDEC:
-
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_PREDEC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_PREDEC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_PREDEC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_PREDEC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_PREDEC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_PREDEC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_PREDEC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_PREDEC
+    BRA     INVALID
 D_IMM_ABS_WORD_LONG:
     ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
 
@@ -1351,6 +1421,248 @@ PRINT_A6_IND:
     RTS
     
 PRINT_A7_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+*----------------PRINT ADDRESS REGISTER POSTINCREMENT-------------**
+PRINT_A0_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+*----------------PRINT ADDRESS REGISTER PREDECREMENT-------------**
+PRINT_A0_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
