@@ -6,13 +6,15 @@
 *-----------------------------------------------------------
     ORG    $1000   
 START:
-    ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
+    BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
-    BSR     GET_BITS_TEST_1
+    BSR     MATCH_INSTRUCTION_TEST_1
+    ;BSR     MATCH_INSTRUCTION_TEST_2
+    ;BSR     GET_BITS_TEST_1
     ;BSR     GET_BITS_TEST_2
     ;BSR     GET_BITS_TEST_3
     ;BSR     GET_BITS_TEST_4
@@ -23,6 +25,17 @@ RUN_TESTS:
     ;BSR     ASCII_TO_HEX_TEST_4
     ;BSR     ASCII_TO_HEX_TEST_5
     SIMHALT
+
+; TESTS MATCH_INSTRUCTION
+
+; TESTS RTS
+MATCH_INSTRUCTION_TEST_1:
+    MOVE.W  #$4E75, D7                  ; LOAD RTS HEX (4E75) TO D7
+    BSR     MATCH_INSTRUCTION           ; EXPECTS D7: 0, CONSOLE: RTS
+
+MATCH_INSTRUCTION_TEST_2:
+    MOVE.L  #$4E75, D7                  ; LOAD RTS HEX (4E75) TO D7
+    BSR     MATCH_INSTRUCTION           ; EXPECTS D7: 0, CONSOLE: RTS
 
 ; TESTS ASCII_TO_HEX
 ASCII_TO_HEX_TEST_1:
@@ -66,6 +79,7 @@ ASCII_TO_HEX_TEST_5:
     ; TODO: ADD ASSERTION HERE
     RTS
 
+; TESTS GET_BITS
 GET_BITS_TEST_1:
     MOVE.W  #%0001000000000001, D1      ; LOAD HEX: 1001 (MOVE.B  D1, D0)
     MOVE.B  #0, D2                      ; START FROM 0
@@ -1832,6 +1846,9 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
+
+
 
 
 
