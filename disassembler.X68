@@ -472,10 +472,14 @@ MOVE:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
-    
+
+    ** PRINT INSTRUCTION **
     LEA     OPC_MOVE, A1
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE3
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     GET_DEST_MODE
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
@@ -984,6 +988,380 @@ PRINT_NEWLINE:
     TRAP    #15
     RTS
 
+**---------------PRINT COMMA----------------------**
+PRINT_COMMA:
+    LEA     VAR_COMMA, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+**-------------------GET MODE---------------------**
+** ARGUMENTS:
+* D1: SOURCE MODE
+*   D1: MODE OF SOURCE REGISTER
+GET_SOURCE_MODE:
+    MOVE.B  SOURCE_MODE, D1
+    CMP.B   #$00, D1
+    BEQ     S_DATA_REGISTER
+    CMP.B   #$01, D1
+    BEQ     S_ADDRESS_REG_DIRECT
+    CMP.B   #$02, D1
+    BEQ     S_ADDRESS_REG_INDIRECT
+    CMP.B   #$03, D1
+    BEQ     S_ADDRESS_REG_POSTINC
+    CMP.B   #$04, D1
+    BEQ     S_ADDRESS_REG_PREDEC
+    CMP.B   #$07, D1
+    BEQ     S_IMM_ABS_WORD_LONG       ; NEED Xn TO DETERMINE
+    BRA     INVALID
+
+S_DATA_REGISTER:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_D0
+    CMP.B   #$01, D1
+    BEQ     PRINT_D1
+    CMP.B   #$02, D1
+    BEQ     PRINT_D2
+    CMP.B   #$03, D1
+    BEQ     PRINT_D3
+    CMP.B   #$04, D1
+    BEQ     PRINT_D4
+    CMP.B   #$05, D1
+    BEQ     PRINT_D5
+    CMP.B   #$06, D1
+    BEQ     PRINT_D6
+    CMP.B   #$07, D1
+    BEQ     PRINT_D7
+    BRA     INVALID
+    
+S_ADDRESS_REG_DIRECT:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7
+    BRA     INVALID
+    
+S_ADDRESS_REG_INDIRECT:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_IND
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_IND
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_IND
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_IND
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_IND
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_IND
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_IND
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_IND
+    BRA     INVALID
+S_ADDRESS_REG_POSTINC:
+
+S_ADDRESS_REG_PREDEC:
+
+S_IMM_ABS_WORD_LONG:
+    ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+
+**-------------------GET MODE---------------------**
+** ARGUMENTS:
+* D1: SOURCE MODE
+*   D1: MODE OF SOURCE REGISTER
+GET_DEST_MODE:
+    MOVE.B  DESTINATION_MODE, D1
+    CMP.B   #$00, D1
+    BEQ     D_DATA_REGISTER
+    CMP.B   #$01, D1
+    BEQ     D_ADDRESS_REG_DIRECT
+    CMP.B   #$02, D1
+    BEQ     D_ADDRESS_REG_INDIRECT
+    CMP.B   #$03, D1
+    BEQ     D_ADDRESS_REG_POSTINC
+    CMP.B   #$04, D1
+    BEQ     D_ADDRESS_REG_PREDEC
+    CMP.B   #$07, D1
+    BEQ     D_IMM_ABS_WORD_LONG       ; NEED Xn TO DETERMINE
+    BRA     INVALID
+
+D_DATA_REGISTER:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_D0
+    CMP.B   #$01, D1
+    BEQ     PRINT_D1
+    CMP.B   #$02, D1
+    BEQ     PRINT_D2
+    CMP.B   #$03, D1
+    BEQ     PRINT_D3
+    CMP.B   #$04, D1
+    BEQ     PRINT_D4
+    CMP.B   #$05, D1
+    BEQ     PRINT_D5
+    CMP.B   #$06, D1
+    BEQ     PRINT_D6
+    CMP.B   #$07, D1
+    BEQ     PRINT_D7
+    BRA     INVALID
+
+D_ADDRESS_REG_DIRECT:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7
+    BRA     INVALID
+    
+D_ADDRESS_REG_INDIRECT:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_IND
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_IND
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_IND
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_IND
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_IND
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_IND
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_IND
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_IND
+    BRA     INVALID
+    
+D_ADDRESS_REG_POSTINC:
+
+D_ADDRESS_REG_PREDEC:
+
+D_IMM_ABS_WORD_LONG:
+    ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+
+**----------------PRINT DATA REGISTER-------------**
+PRINT_D0:
+    LEA     DATA_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D1:
+    LEA     DATA_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D2:
+    LEA     DATA_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D3:
+    LEA     DATA_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D4:
+    LEA     DATA_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D5:
+    LEA     DATA_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D6:
+    LEA     DATA_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D7:
+    LEA     DATA_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+**----------------PRINT ADDRESS REGISTER-------------**
+PRINT_A0:
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1:
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2:
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3:
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4:
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5:
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6:
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7:
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+*----------------PRINT ADDRESS REGISTER INDIRECT-------------**
+PRINT_A0_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
 **-------------------GET SIZE---------------------**
 ** USES SIZE IN SIZE MEMORY LOCATION**
 PRINT_SIZE1:
@@ -1095,23 +1473,23 @@ VAR_ADDR_REG        	   DC.L        'A',0		* Symbol used for formatting
 VAR_COM                    DC.L        ',',0        * Symbol used for formatting
 VAR_DATA                   DC.B        'DATA    ',0	* For Data Errors
 
-ADDR_SEVEN                 DC.L        'A7,',0
-ADDR_SIX                   DC.L        'A6,',0
-ADDR_FIVE                  DC.L        'A5,',0
-ADDR_FOUR                  DC.L        'A4,',0
-ADDR_THREE                 DC.L        'A3,',0
-ADDR_TWO                   DC.L        'A2,',0
-ADDR_ONE                   DC.L        'A1,',0
-ADDR_ZERO                  DC.L        'A0,',0
+ADDR_SEVEN                 DC.L        'A7',0
+ADDR_SIX                   DC.L        'A6',0
+ADDR_FIVE                  DC.L        'A5',0
+ADDR_FOUR                  DC.L        'A4',0
+ADDR_THREE                 DC.L        'A3',0
+ADDR_TWO                   DC.L        'A2',0
+ADDR_ONE                   DC.L        'A1',0
+ADDR_ZERO                  DC.L        'A0',0
 
-DATA_SEVEN                 DC.L        'D7,',0
-DATA_SIX                   DC.L        'D6,',0
-DATA_FIVE                  DC.L        'D5,',0
-DATA_FOUR                  DC.L        'D4,',0
-DATA_THREE                 DC.L        'D3,',0
-DATA_TWO                   DC.L        'D2,',0
-DATA_ONE                   DC.L        'D1,',0
-DATA_ZERO                  DC.L        'D0,',0
+DATA_SEVEN                 DC.L        'D7',0
+DATA_SIX                   DC.L        'D6',0
+DATA_FIVE                  DC.L        'D5',0
+DATA_FOUR                  DC.L        'D4',0
+DATA_THREE                 DC.L        'D3',0
+DATA_TWO                   DC.L        'D2',0
+DATA_ONE                   DC.L        'D1',0
+DATA_ZERO                  DC.L        'D0',0
 
 INSTRUCTION_PROMPT  DC.B    'ENTER HEX INSTRUCTION: ',0
 ERROR               DC.B    'INPUT ERROR',CR,LF,0
