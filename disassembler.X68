@@ -236,11 +236,11 @@ GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS
 
 MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instruction branch       
     MOVE.L  D7, D5
-    CMP.W   #$4E75, D1              ; COMPARE TO CONSTANT RTS OP CODE
+    CMP.W   #$4E75, D5              ; COMPARE TO CONSTANT RTS OP CODE
     BEQ     RTS
     
     MOVE.L  D7, D5
-    CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
+    CMP.W   #$4E71, D5              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
     
     MOVE.L  D7, D5
@@ -429,14 +429,16 @@ CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
 ; ** IN D7 FOR REMAINDER OF INSTRUCTION DECOMPOSITION
 RTS:
     LEA     OPC_RTS, A1
-    MOVE.B  #13, D0
+    MOVE.B  #14, D0
     TRAP    #15                     ; PRINT RTS OP CODE
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
     
 NOP:
     LEA     OPC_NOP, A1
-    MOVE.B  #13, D0
+    MOVE.B  #14, D0
     TRAP    #15                     ; PRINT NOP OP CODE
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 MOVE:
@@ -470,7 +472,12 @@ MOVE:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
-
+    
+    LEA     OPC_MOVE, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
     
 JSR:
@@ -486,6 +493,11 @@ JSR:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_JSR, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 MOVEM:
@@ -514,6 +526,12 @@ MOVEM:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_MOVEM, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE2
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 LEA:
@@ -536,6 +554,11 @@ LEA:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_LEA, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 NOT:
@@ -557,6 +580,12 @@ NOT:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_LEA, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 BLT:
@@ -567,6 +596,11 @@ BLT:
     MOVE.B  #8, D3
     BSR     GET_BITS
     MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BLT, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 BGE:
@@ -577,6 +611,11 @@ BGE:
     MOVE.B  #8, D3
     BSR     GET_BITS
     MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BGE, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 BEQ:
@@ -587,6 +626,11 @@ BEQ:
     MOVE.B  #8, D3
     BSR     GET_BITS
     MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BEQ, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 BRA:
@@ -597,6 +641,11 @@ BRA:
     MOVE.B  #8, D3
     BSR     GET_BITS
     MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BRA, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 DIVU:
@@ -619,6 +668,11 @@ DIVU:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_DIVU, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 SUB:
@@ -654,6 +708,12 @@ SUB:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_SUB, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 MULS:
@@ -676,6 +736,11 @@ MULS:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_MULS, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 AND:
@@ -711,6 +776,12 @@ AND:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_AND, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 ADD:
@@ -746,6 +817,12 @@ ADD:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_ADD, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 LSD_IMMEDIATE:
@@ -768,6 +845,11 @@ LSD_IMMEDIATE:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_LSL/LSR, A1
+    ;BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 LSD_REGISTER:
@@ -803,6 +885,12 @@ LSD_REGISTER:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_LSL/LSR, A1
+    ;BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 ASD_IMMEDIATE:
@@ -825,6 +913,11 @@ ASD_IMMEDIATE:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_ASL/ASR, A1
+    ;BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 ASD_REGISTER:
@@ -860,6 +953,12 @@ ASD_REGISTER:
     MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_ASL/ASR, A1
+    ;BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 INVALID:
@@ -870,7 +969,70 @@ INVALID:
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 **-----------END INSTRUCTION DISASSEMBLY----------**
+
+**---------------PRINT OPCODE---------------------**
+** PRINT OPCODE LOADED IN A1
+PRINT_OPCODE:
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**---------------PRINT NEWLINE--------------------**
+PRINT_NEWLINE:
+    LEA     VAR_NEW_LINE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**-------------------GET SIZE---------------------**
+** USES SIZE IN SIZE MEMORY LOCATION**
+PRINT_SIZE1:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_BYTE
+    CMP.B   #$01, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$02, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
     
+PRINT_SIZE2:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$01, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
+    
+    
+PRINT_SIZE3:
+    MOVE.B  SIZE, D1
+    CMP.B   #$01, D1
+    BEQ     PRINT_BYTE
+    CMP.B   #$03, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$02, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
+
+PRINT_BYTE:
+    LEA     VAR_BYTE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_WORD:
+    LEA     VAR_WORD, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+PRINT_LONG:
+    LEA     VAR_LONG, A1
+    MOVE.B  #14, D0
+    TRAP    #15    
+    RTS
+   
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
