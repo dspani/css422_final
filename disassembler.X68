@@ -615,8 +615,8 @@ NOT:
     MOVE.B  D1, SIZE
     ** GET SOURCE MODE **
     MOVE.W  D7, D1
-    MOVE.B  #9, D2
-    MOVE.B  #1, D3
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_MODE
     ** GET SOURCE Xn **
@@ -626,7 +626,7 @@ NOT:
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_XN
     
-    LEA     OPC_LEA, A1
+    LEA     OPC_NOT, A1
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE1
     BSR     GET_SOURCE_MODE
@@ -1202,7 +1202,7 @@ S_ADDRESS_REG_INDIRECT:
     BRA     INVALID
     
 S_ADDRESS_REG_POSTINC:
-    MOVE.B  DESTINATION_XN, D1
+    MOVE.B  SOURCE_XN, D1
     CMP.B   #$00, D1
     BEQ     PRINT_A0_POSTINC
     CMP.B   #$01, D1
@@ -1333,6 +1333,7 @@ IMMEDIATE_LONG:
     RTS
 
 SOURCE_ABS_LONG:
+    MOVE.L  #$00000000, D1      ; CLEAR D1
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT OPEN PAREN
@@ -1352,6 +1353,7 @@ SOURCE_ABS_LONG:
     RTS
     
 SOURCE_ABS_WORD:
+    MOVE.L  #$00000000, D1      ; CLEAR D1
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT OPEN PAREN
