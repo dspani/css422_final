@@ -783,7 +783,9 @@ MULS:
     
     LEA     OPC_MULS, A1
     BSR     PRINT_OPCODE
-    
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     D_DATA_REGISTER
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -1235,7 +1237,7 @@ SOURCE_IMMEDIATE:
     BEQ     S_IMMEDIATE_SIZE2
     CMP.B   #$03, D1
     BEQ     S_IMMEDIATE_SIZE3
-    BRA     INVALID
+    BRA     IMMEDIATE_WORD
    
 S_IMMEDIATE_SIZE1:
     MOVE.B  SIZE, D1
@@ -2015,8 +2017,8 @@ OPC_MOVE                   DC.L        'MOVE',0     * Required OP CODE
 OPC_MOVEM                  DC.L        'MOVEM',0    * Required OP CODE
 OPC_ADD                    DC.L        'ADD',0      * Required OP CODE
 OPC_SUB                    DC.L        'SUB',0      * Required OP CODE
-OPC_MULS                   DC.L        'MULS',0     * Required OP CODE
-OPC_DIVU                   DC.L        'DIVU',0     * Required OP CODE
+OPC_MULS                   DC.L        'MULS ',0     * Required OP CODE
+OPC_DIVU                   DC.L        'DIVU ',0     * Required OP CODE
 OPC_LEA                    DC.L        'LEA ',0      * Required OP CODE
 OPC_AND                    DC.L        'AND',0      * Required OP CODE
 OPC_NOT                    DC.L        'NOT',0      * Required OP CODE
