@@ -314,11 +314,6 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     BEQ     SUB
     
     MOVE.L  D7, D5
-    AND.W   #%1111111100000000, D5
-    CMP.W   #%0000010000000000, D5
-    BEQ     SUBI
-    
-    MOVE.L  D7, D5
     AND.W   #%1111000111000000, D5
     CMP.W   #%1100000111000000, D5
     BEQ     MULS
@@ -329,19 +324,9 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     BEQ     AND
     
     MOVE.L  D7, D5
-    AND.W   #%1111111100000000, D5
-    CMP.W   #%0000001000000000, D5
-    BEQ     ANDI
-    
-    MOVE.L  D7, D5
     AND.W   #%1111000000000000, D5
     CMP.W   #%1101000000000000, D5
     BEQ     ADD
-    
-    MOVE.L  D7, D5
-    AND.W   #%1111111100000000, D5
-    CMP.W   #%0000011000000000, D5
-    BEQ     ADDI
     
     MOVE.L  D7, D5
     AND.W   #%1111111011000000, D5
@@ -770,11 +755,6 @@ SUB:
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
-    
-SUBI:
-    ** DUMMY FUNCTION
-    BSR     PRINT_NEWLINE
-    BRA     CLEAR_INSTRUCTION_MEMORY
 
 MULS:
     ** DESTINATION ALWAYS DATA REGISTER **
@@ -845,11 +825,6 @@ AND:
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
-ANDI
-    ** DUMMY FUNCTION
-    BSR     PRINT_NEWLINE
-    BRA     CLEAR_INSTRUCTION_MEMORY
-
 ADD:
     ** DESTINATION ALWAYS DATA REGISTER **
     ** GET DESTINATION Dn **
@@ -889,11 +864,6 @@ ADD:
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE3
     
-    BSR     PRINT_NEWLINE
-    BRA     CLEAR_INSTRUCTION_MEMORY
-
-ADDI
-    ** DUMMY FUNCTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -2144,6 +2114,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
