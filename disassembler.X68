@@ -571,8 +571,8 @@ LEA:
     MOVE.B  D1, DESTINATION_XN
     ** GET SOURCE MODE **
     MOVE.W  D7, D1
-    MOVE.B  #9, D2
-    MOVE.B  #1, D3
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_MODE
     ** GET SOURCE Xn **
@@ -2004,18 +2004,15 @@ PRINT_LONG:
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
 **----------DISPLAY INSTRUCTION CONSTANTS---------**
-OPC_NOP                    DC.L        'NOP',0      * Required OP CODE
+OPC_NOP                    DC.L        'NOP ',0      * Required OP CODE
 OPC_MOVE                   DC.L        'MOVE',0     * Required OP CODE   
 OPC_MOVEM                  DC.L        'MOVEM',0    * Required OP CODE
 OPC_ADD                    DC.L        'ADD',0      * Required OP CODE
-OPC_ADDI                   DC.L        'ADDI',0     * Required OP CODE
 OPC_SUB                    DC.L        'SUB',0      * Required OP CODE
-OPC_SUBI                    DC.L       'SUBI',0     * Required OP CODE
 OPC_MULS                   DC.L        'MULS',0     * Required OP CODE
 OPC_DIVU                   DC.L        'DIVU',0     * Required OP CODE
-OPC_LEA                    DC.L        'LEA',0      * Required OP CODE
+OPC_LEA                    DC.L        'LEA ',0      * Required OP CODE
 OPC_AND                    DC.L        'AND',0      * Required OP CODE
-OPC_ANDI                    DC.L       'ANDI',0     * Required OP CODE
 OPC_NOT                    DC.L        'NOT',0      * Required OP CODE
 OPC_LSL                    DC.L        'LSL',0      * Required OP CODE
 OPC_ASR                    DC.L        'ASR',0      * Required OP CODE
