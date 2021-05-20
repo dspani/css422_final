@@ -442,6 +442,14 @@ CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
+    CLR.L   D0
+    CLR.L   D1
+    CLR.L   D2
+    CLR.L   D3
+    CLR.L   D4
+    CLR.L   D5
+    CLR.L   D6
+    CLR.L   D7
     RTS
 
 **-----------BEGIN INSTRUCTION DISASSEMBLY----------**
@@ -629,7 +637,6 @@ BLT:
     
     LEA     OPC_BLT, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_HEX
     BSR     GET_DISPLACEMENT
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
@@ -645,7 +652,6 @@ BGE:
     
     LEA     OPC_BGE, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_HEX
     BSR     GET_DISPLACEMENT
     
     BSR     PRINT_NEWLINE
@@ -662,7 +668,6 @@ BEQ:
     
     LEA     OPC_BEQ, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_HEX
     BSR     GET_DISPLACEMENT
 
     BSR     PRINT_NEWLINE
@@ -679,7 +684,6 @@ BRA:
     
     LEA     OPC_BRA, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_HEX
     BSR     GET_DISPLACEMENT
     
     BSR     PRINT_NEWLINE
@@ -1304,9 +1308,9 @@ IMMEDIATE_LONG:
 
 SOURCE_ABS_LONG:
     MOVE.L  #$00000000, D1      ; CLEAR D1
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT OPEN PAREN
+    ;LEA     VAR_OPEN_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
@@ -1314,19 +1318,19 @@ SOURCE_ABS_LONG:
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT CLOSE PAREN
-    LEA     VAR_LONG, A1
-    MOVE.B  #14, D0 
-    TRAP    #15                 ; PRINT ".L" END
+    ;LEA     VAR_CLOSE_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT CLOSE PAREN
+    ;LEA     VAR_LONG, A1
+    ;MOVE.B  #14, D0 
+    ;TRAP    #15                 ; PRINT ".L" END
     RTS
     
 SOURCE_ABS_WORD:
     MOVE.L  #$00000000, D1      ; CLEAR D1
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT OPEN PAREN
+    ;LEA     VAR_OPEN_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
@@ -1334,12 +1338,12 @@ SOURCE_ABS_WORD:
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT CLOSE PAREN
-    LEA     VAR_WORD, A1
-    MOVE.B  #14, D0 
-    TRAP    #15                 ; PRINT ".W" END
+    ;LEA     VAR_CLOSE_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT CLOSE PAREN
+    ;LEA     VAR_WORD, A1
+    ;MOVE.B  #14, D0 
+    ;TRAP    #15                 ; PRINT ".W" END
     RTS
     
 **-------------------GET MODE---------------------**
@@ -1478,28 +1482,30 @@ DEST_IMMEDIATE:
     BRA INVALID
     
 DEST_ABS_LONG:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT OPEN PAREN
-    LEA     VAR_HEX, A1
+    MOVE.L  #$00000000, D1      ; CLEAR D1
+    ;LEA     VAR_OPEN_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT OPEN PAREN
+    ;LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
     MOVE.L  (A6)+, D1
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT CLOSE PAREN
-    LEA     VAR_LONG, A1
-    MOVE.B  #14, D0 
-    TRAP    #15                 ; PRINT ".L" END
+    ;LEA     VAR_CLOSE_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT CLOSE PAREN
+    ;LEA     VAR_LONG, A1
+    ;MOVE.B  #14, D0 
+    ;TRAP    #15                 ; PRINT ".L" END
     RTS
     
 DEST_ABS_WORD:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT OPEN PAREN
+    MOVE.L  #$00000000, D1      ; CLEAR D1
+    ;LEA     VAR_OPEN_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
@@ -1507,12 +1513,12 @@ DEST_ABS_WORD:
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT CLOSE PAREN
-    LEA     VAR_WORD, A1
-    MOVE.B  #14, D0 
-    TRAP    #15                 ; PRINT ".W" END
+    ;LEA     VAR_CLOSE_PAREN, A1
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                 ; PRINT CLOSE PAREN
+    ;LEA     VAR_WORD, A1
+    ;MOVE.B  #14, D0 
+    ;TRAP    #15                 ; PRINT ".W" END
     RTS
     
 **----------------PRINT DATA REGISTER-------------**
