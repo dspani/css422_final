@@ -314,6 +314,11 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     BEQ     SUB
     
     MOVE.L  D7, D5
+    AND.W   #%1111111100000000, D5
+    CMP.W   #%0000010000000000, D5
+    BEQ     SUBI
+    
+    MOVE.L  D7, D5
     AND.W   #%1111000111000000, D5
     CMP.W   #%1100000111000000, D5
     BEQ     MULS
@@ -324,11 +329,20 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     BEQ     AND
     
     MOVE.L  D7, D5
+    AND.W   #%1111111100000000, D5
+    CMP.W   #%0000001000000000, D5
+    BEQ     ANDI
+    
+    MOVE.L  D7, D5
     AND.W   #%1111000000000000, D5
     CMP.W   #%1101000000000000, D5
     BEQ     ADD
     
-    ;CHANGE NAME FROM LSD1 AND LSD2 TO SOMETHING MORE SPECIFIC
+    MOVE.L  D7, D5
+    AND.W   #%1111111100000000, D5
+    CMP.W   #%0000011000000000, D5
+    BEQ     ADDI
+    
     MOVE.L  D7, D5
     AND.W   #%1111111011000000, D5
     CMP.W   #%1110001011000000, D5
@@ -339,7 +353,6 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     CMP.W   #%1110000000001000, D5
     BEQ     LSD_REGISTER
     
-    ;CHANGE NAME FROM ASD1 AND ASD2 TO SOMETHING MORE SPECIFIC
     MOVE.L  D7, D5
     AND.W   #%1111111011000000, D5
     CMP.W   #%1110000011000000, D5
@@ -424,6 +437,7 @@ CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
     MOVE.B  #$FF, SIZE
+    MOVE.B  #$FF, SIZE_TYPE
     MOVE.B  #$FF, FIRST_FOUR_NYBBLE
     MOVE.B  #$FF, DESTINATION_MODE
     MOVE.B  #$FF, DESTINATION_XN
@@ -465,6 +479,7 @@ NOP:
 
 MOVE:
     ** GET SIZE 3**
+    MOVE.B  #3, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #2, D2
     MOVE.B  #2, D3
@@ -522,11 +537,11 @@ JSR:
     
     LEA     OPC_JSR, A1
     BSR     PRINT_OPCODE
-    
+    BSR     GET_SOURCE_MODE
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
-MOVEM:
+MOVEM:                                                          
     ** GET DIRECTION **
     ** REGISTER TO MEMORY (0) OR MEMORY TO REGISTER (1)**
     MOVE.W  D7, D1
@@ -535,6 +550,7 @@ MOVEM:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 2**
+    MOVE.B  #2, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #2, D2
     MOVE.B  #2, D3
@@ -583,12 +599,15 @@ LEA:
     
     LEA     OPC_LEA, A1
     BSR     PRINT_OPCODE
-    
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     D_ADDRESS_REG_DIRECT
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 NOT:
     ** GET SIZE 1**
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -610,7 +629,7 @@ NOT:
     LEA     OPC_LEA, A1
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE1
-    
+    BSR     GET_SOURCE_MODE
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -704,7 +723,9 @@ DIVU:
     
     LEA     OPC_DIVU, A1
     BSR     PRINT_OPCODE
-    
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     D_DATA_REGISTER
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -724,6 +745,7 @@ SUB:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 3 **
+    MOVE.B  #3, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -746,6 +768,11 @@ SUB:
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE3
     
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
+    
+SUBI:
+    ** DUMMY FUNCTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -792,6 +819,7 @@ AND:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 1 **
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -817,6 +845,11 @@ AND:
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
+ANDI
+    ** DUMMY FUNCTION
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
+
 ADD:
     ** DESTINATION ALWAYS DATA REGISTER **
     ** GET DESTINATION Dn **
@@ -833,6 +866,7 @@ ADD:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 3 **
+    MOVE.B  #3, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -855,6 +889,11 @@ ADD:
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE3
     
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
+
+ADDI
+    ** DUMMY FUNCTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -900,6 +939,7 @@ LSD_REGISTER:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 1 **
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -968,6 +1008,7 @@ ASD_REGISTER:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 1 **
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -1051,6 +1092,9 @@ GET_DISPLACEMENT:
     BRA     PRINT_BYTE_DISPLACEMENT
 
 PRINT_WORD_DISPLACEMENT:
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
     MOVE.W (A6)+,D1
     MOVE.B  #15, D0
     MOVE.B  #16, D2
@@ -1058,6 +1102,9 @@ PRINT_WORD_DISPLACEMENT:
     RTS
     
 PRINT_LONG_DISPLACEMENT:
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
     MOVE.L (A6)+,D1
     MOVE.B  #15, D0
     MOVE.B  #16, D2
@@ -1065,6 +1112,9 @@ PRINT_LONG_DISPLACEMENT:
     RTS
 
 PRINT_BYTE_DISPLACEMENT:
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
     MOVE.B  (DISPLACEMENT), D1
     MOVE.B  #15, D0
     MOVE.B  #16, D2
@@ -1190,9 +1240,136 @@ S_ADDRESS_REG_PREDEC:
     CMP.B   #$07, D1
     BEQ     PRINT_A7_PREDEC
     BRA     INVALID
+    
 S_IMM_ABS_WORD_LONG:
     ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$04, D1
+    BEQ     SOURCE_IMMEDIATE
+    CMP.B   #$01, D1
+    BEQ     SOURCE_ABS_LONG
+    CMP.B   #$00, D1
+    BEQ     SOURCE_ABS_WORD
+    BRA     INVALID
 
+SOURCE_IMMEDIATE:
+    ** USE SIZE TO DETERMINE SIZE OF IMMEDIATE DATA **
+    MOVE.B  SIZE_TYPE, D1
+    CMP.B   #$01, D1
+    BEQ     S_IMMEDIATE_SIZE1
+    CMP.B   #$02, D1
+    BEQ     S_IMMEDIATE_SIZE2
+    CMP.B   #$03, D1
+    BEQ     S_IMMEDIATE_SIZE3
+    BRA     INVALID
+   
+S_IMMEDIATE_SIZE1:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     IMMEDIATE_BYTE
+    CMP.B   #$01, D1
+    BEQ     IMMEDIATE_WORD
+    CMP.B   #$02, D1
+    BEQ     IMMEDIATE_LONG
+    BRA     INVALID
+
+S_IMMEDIATE_SIZE2:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     IMMEDIATE_WORD
+    CMP.B   #$01, D1
+    BEQ     IMMEDIATE_LONG
+    BRA     INVALID
+
+S_IMMEDIATE_SIZE3:
+    MOVE.B  SIZE, D1
+    CMP.B   #$01, D1
+    BEQ     IMMEDIATE_BYTE
+    CMP.B   #$03, D1
+    BEQ     IMMEDIATE_WORD
+    CMP.B   #$02, D1
+    BEQ     IMMEDIATE_LONG
+    BRA     INVALID
+
+IMMEDIATE_BYTE:
+    MOVE.L  #$00000000, D1
+    LEA     VAR_NUM, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "#"
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "$"
+    MOVE.W  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15             ; PRINT WORD VALUE
+    RTS
+
+IMMEDIATE_WORD:
+    MOVE.L  #$0000000, D1
+    LEA     VAR_NUM, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "#"
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "$"
+    MOVE.W  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    RTS
+
+IMMEDIATE_LONG:
+    LEA     VAR_NUM, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "#"
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15             ; PRINT "$"
+    MOVE.L  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    RTS
+
+SOURCE_ABS_LONG:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT OPEN PAREN
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT HEX SIGN
+    MOVE.L  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15                 ; PRINT VALUE IN HEX
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT CLOSE PAREN
+    LEA     VAR_LONG, A1
+    MOVE.B  #14, D0 
+    TRAP    #15                 ; PRINT ".L" END
+    RTS
+    
+SOURCE_ABS_WORD:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT OPEN PAREN
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT HEX SIGN
+    MOVE.W  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15                 ; PRINT VALUE IN HEX
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT CLOSE PAREN
+    LEA     VAR_WORD, A1
+    MOVE.B  #14, D0 
+    TRAP    #15                 ; PRINT ".W" END
+    RTS
+    
 **-------------------GET MODE---------------------**
 ** ARGUMENTS:
 * D1: SOURCE MODE
@@ -1292,6 +1469,7 @@ D_ADDRESS_REG_POSTINC:
     CMP.B   #$07, D1
     BEQ     PRINT_A7_POSTINC
     BRA     INVALID
+    
 D_ADDRESS_REG_PREDEC:
     MOVE.B  DESTINATION_XN, D1
     CMP.B   #$00, D1
@@ -1311,9 +1489,60 @@ D_ADDRESS_REG_PREDEC:
     CMP.B   #$07, D1
     BEQ     PRINT_A7_PREDEC
     BRA     INVALID
+    
 D_IMM_ABS_WORD_LONG:
     ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$04, D1
+    BEQ     DEST_IMMEDIATE
+    CMP.B   #$01, D1
+    BEQ     DEST_ABS_LONG
+    CMP.B   #$00, D1
+    BEQ     DEST_ABS_WORD
+    BRA     INVALID
 
+DEST_IMMEDIATE:
+    ** DESTINATION CANNOT BE IMMEDIATE DATA **
+    BRA INVALID
+    
+DEST_ABS_LONG:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT OPEN PAREN
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT HEX SIGN
+    MOVE.L  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15                 ; PRINT VALUE
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT CLOSE PAREN
+    LEA     VAR_LONG, A1
+    MOVE.B  #14, D0 
+    TRAP    #15                 ; PRINT ".L" END
+    RTS
+    
+DEST_ABS_WORD:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT OPEN PAREN
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT HEX SIGN
+    MOVE.W  (A6)+, D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15                 ; PRINT VALUE IN HEX
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15                 ; PRINT CLOSE PAREN
+    LEA     VAR_WORD, A1
+    MOVE.B  #14, D0 
+    TRAP    #15                 ; PRINT ".W" END
+    RTS
+    
 **----------------PRINT DATA REGISTER-------------**
 PRINT_D0:
     LEA     DATA_ZERO, A1
@@ -1807,11 +2036,14 @@ OPC_NOP                    DC.L        'NOP',0      * Required OP CODE
 OPC_MOVE                   DC.L        'MOVE',0     * Required OP CODE   
 OPC_MOVEM                  DC.L        'MOVEM',0    * Required OP CODE
 OPC_ADD                    DC.L        'ADD',0      * Required OP CODE
+OPC_ADDI                   DC.L        'ADDI',0     * Required OP CODE
 OPC_SUB                    DC.L        'SUB',0      * Required OP CODE
+OPC_SUBI                    DC.L       'SUBI',0     * Required OP CODE
 OPC_MULS                   DC.L        'MULS',0     * Required OP CODE
 OPC_DIVU                   DC.L        'DIVU',0     * Required OP CODE
 OPC_LEA                    DC.L        'LEA',0      * Required OP CODE
 OPC_AND                    DC.L        'AND',0      * Required OP CODE
+OPC_ANDI                    DC.L       'ANDI',0     * Required OP CODE
 OPC_NOT                    DC.L        'NOT',0      * Required OP CODE
 OPC_LSL                    DC.L        'LSL',0      * Required OP CODE
 OPC_ASR                    DC.L        'ASR',0      * Required OP CODE
@@ -1894,6 +2126,7 @@ DESTINATION_XN      DS.B    1       ; DECLARE 1 BYTE FOR DESTINATION Xn
 SOURCE_MODE         DS.B    1       ; DECLARE 1 BYTE FOR SOURCE MODE
 SOURCE_XN           DS.B    1       ; DELCARE 1 BYTE FOR SOURCE Xn
 SIZE                DS.B    1       ; DECLARE 1 BYTE FOR SIZE
+SIZE_TYPE           DS.B    1       ; DECLARE 1 BYTE FOR TYPE OF SIZE (1,2,3)
 DIRECTION           DS.B    1       ; DECLARE 1 BYTE FOR DIRECTION
 ROTATION            DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD ROTATION
 COUNT_REGISTER      DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD COUNT/REGISTER
@@ -1909,6 +2142,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
