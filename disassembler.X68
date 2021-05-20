@@ -545,14 +545,14 @@ MOVEM:
     ** GET SIZE 2**
     MOVE.B  #2, SIZE_TYPE
     MOVE.W  D7, D1
-    MOVE.B  #2, D2
-    MOVE.B  #2, D3
+    MOVE.B  #9, D2
+    MOVE.B  #1, D3
     BSR     GET_BITS
     MOVE.B  D1, SIZE
     ** GET SOURCE MODE **
     MOVE.W  D7, D1
-    MOVE.B  #9, D2
-    MOVE.B  #1, D3
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
     BSR     GET_BITS
     MOVE.B  D1, SOURCE_MODE
     ** GET SOURCE Xn **
