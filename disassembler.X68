@@ -8,11 +8,14 @@
 START:
     ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
     BSR     INPUT_START_ADDRESS
+    MOVE.L  (START_ADDRESS), A6
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
-    BSR     GET_BITS_TEST_1
+    BSR     MATCH_INSTRUCTION_TEST_1
+    BSR     MATCH_INSTRUCTION_TEST_2
+    ;BSR     GET_BITS_TEST_1
     ;BSR     GET_BITS_TEST_2
     ;BSR     GET_BITS_TEST_3
     ;BSR     GET_BITS_TEST_4
@@ -23,6 +26,17 @@ RUN_TESTS:
     ;BSR     ASCII_TO_HEX_TEST_4
     ;BSR     ASCII_TO_HEX_TEST_5
     SIMHALT
+
+; TESTS MATCH_INSTRUCTION
+
+; TESTS RTS
+MATCH_INSTRUCTION_TEST_1:
+    MOVE.W  #$4E75, D7                  ; LOAD RTS HEX (4E75) TO D7
+    BSR     MATCH_INSTRUCTION           ; EXPECTS D7: 0, CONSOLE: RTS
+
+MATCH_INSTRUCTION_TEST_2:
+    MOVE.L  #$4E75, D7                  ; LOAD RTS HEX (4E75) TO D7
+    BSR     MATCH_INSTRUCTION           ; EXPECTS D7: 0, CONSOLE: RTS
 
 ; TESTS ASCII_TO_HEX
 ASCII_TO_HEX_TEST_1:
@@ -66,6 +80,7 @@ ASCII_TO_HEX_TEST_5:
     ; TODO: ADD ASSERTION HERE
     RTS
 
+; TESTS GET_BITS
 GET_BITS_TEST_1:
     MOVE.W  #%0001000000000001, D1      ; LOAD HEX: 1001 (MOVE.B  D1, D0)
     MOVE.B  #0, D2                      ; START FROM 0
@@ -188,8 +203,8 @@ INPUT_ERROR:
     LEA     ERROR, A1
     MOVE.B  #13, D0
     TRAP    #15                     ; PRINT ERROR MESSAGE ON INSTRUCTION ERROR
-    ;BRA     MAIN                    ; RETURN TO MAIN (TODO: RETURN TO ORIGINAL LOCATION)
-    RTS
+    BSR     CLEAR_INSTRUCTION_MEMORY
+    BRA     MAIN
 
 **--------------GET ADDRESSING----------------**
 INPUT_START_ADDRESS:
@@ -236,16 +251,16 @@ GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS
 
 MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instruction branch       
     MOVE.L  D7, D5
-    CMP.W   #$4E75, D1              ; COMPARE TO CONSTANT RTS OP CODE
+    CMP.W   #$4E75, D5              ; COMPARE TO CONSTANT RTS OP CODE
     BEQ     RTS
     
     MOVE.L  D7, D5
-    CMP.W   #$4E71, D1              ; COMPARE TO CONSTANT NOP OP CODE
+    CMP.W   #$4E71, D5              ; COMPARE TO CONSTANT NOP OP CODE
     BEQ     NOP
     
     MOVE.L  D7, D5
     AND.W   #%1100000000000000, D5
-    CMP.W   #$0000, D2
+    CMP.W   #$0000, D5
     BEQ     MOVE
     
     MOVE.L  D7, D5
@@ -280,7 +295,7 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
     
     MOVE.L  D7, D5
     AND.W   #%1111111100000000, D5
-    CMP.W   #%0110011000000000, D5
+    CMP.W   #%0110011100000000, D5
     BEQ     BEQ
     
     MOVE.L  D7, D5
@@ -347,9 +362,9 @@ MATCH_INSTRUCTION:  ;match instruction and branching to the specifide instructio
 ; D1: SOURCE INSTRCUTION
 ;   D1 STORES THE BASE WORD INSTRUCTION
 ; D2: STARTING LOCATION
-;   X STARTING LOCATION FROM LEFT TO RIGHT IN BASE INSTRUCTION
+;   X STARTING LOCATION FROM LEFT TO RIGHT OF BASE INSTRUCTION STARTING FROM 0
 ; D3: NUMBER OF BITS TO GET
-;   N NUMBER OF BITS TO GET STARTING FROM D2 STARTING LOCATION
+;   N NUMBER OF BITS TO GET STARTING FROM D2 STARTING LOCATION STARTING FROM 1
 ; ** RETURNS:
 ; D1:
 ;   D1 CONTAINS ONLY THE BITS STARTING FROM X SHIFTED ALL THE WAY TO THE RIGHT
@@ -381,119 +396,1409 @@ GET_BITS:
 **------------------BEGIN MAIN LOOP----------------**  
 MAIN:                               ; MAIN LOOP    
 
-    BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
-    LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
-    LEA     INSTRUCTION, A2         ; LOAD DESTINATION 
-    BSR     ASCII_TO_HEX            ; RETURNS INSTRUCTION AT INSTRUCTION ADDRESS
-    LEA     INSTRUCTION, A1
-    MOVE.W  (A1)+, D7               ; DEREFERENCE WORD INSTRUCTION
+    ;BSR     GET_INSTRUCTION         ; RETURNS ASCII INSTRUCTION STARTING AT ASCII_INSTRUCTION ADDRESS
+    ;LEA     ASCII_INSTRUCTION, A1   ; LOAD START OF CURRENT INSTRUCTION INTO A1
+    ;LEA     INSTRUCTION, A2         ; LOAD DESTINATION 
+    ;BSR     ASCII_TO_HEX            ; RETURNS INSTRUCTION AT INSTRUCTION ADDRESS
+    ;LEA     INSTRUCTION, A1
+    MOVE.L  (END_ADDRESS), A5
+    CMP.L   A5, A6
+    BGE     END_DISASSEMBLY         ; END IF CURRENT ADDRESS GREATER OR EQUAL TO END ADDRESS
+    MOVE.W  (A6)+, D7               ; DEREFERENCE WORD INSTRUCTION FROM POINTER TO CURRENT INSTRUCTION (A6)
+    CMP.W   #$FFFF, D7
+    BEQ     END_DISASSEMBLY         ; END IF INSTRUCTION = #$FFFF
     BSR     MATCH_INSTRUCTION
-    BSR     CLEAR_INSTRUCTION       ; CLEAR MEMORY OF INSTRUCTION
+    BSR     CLEAR_INSTRUCTION_MEMORY       ; CLEAR MEMORY OF INSTRUCTION
       
     BRA     MAIN                    ; RESTART LOOP
     SIMHALT
 **------------------END MAIN LOOP----------------**  
+END_DISASSEMBLY:
+    SIMHALT
 
-
-CLEAR_INSTRUCTION:
+CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
     LEA     INSTRUCTION, A1
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
     MOVE.W  #$0000, (A1)+
-    BRA     MAIN
+    MOVE.B  #$FF, SIZE
+    MOVE.B  #$FF, FIRST_FOUR_NYBBLE
+    MOVE.B  #$FF, DESTINATION_MODE
+    MOVE.B  #$FF, DESTINATION_XN
+    MOVE.B  #$FF, SOURCE_MODE
+    MOVE.B  #$FF, SOURCE_XN
+    MOVE.B  #$FF, DIRECTION
+    MOVE.B  #$FF, ROTATION
+    MOVE.B  #$FF, DISPLACEMENT
+    LEA     ASCII_INSTRUCTION, A1
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    MOVE.W  #$0000, (A1)+
+    RTS
 
 **-----------BEGIN INSTRUCTION DISASSEMBLY----------**
 ; ** FOR THE FOLLOWING, THE INSTRUCTION MUST BE LOADED
 ; ** IN D7 FOR REMAINDER OF INSTRUCTION DECOMPOSITION
 RTS:
     LEA     OPC_RTS, A1
-    MOVE.B  #13, D0
+    MOVE.B  #14, D0
     TRAP    #15                     ; PRINT RTS OP CODE
-    BRA     CLEAR_INSTRUCTION
+    BSR     PRINT_NEWLINE
+    BSR     CLEAR_INSTRUCTION_MEMORY
+    BRA     MAIN
     
 NOP:
     LEA     OPC_NOP, A1
-    MOVE.B  #13, D0
+    MOVE.B  #14, D0
     TRAP    #15                     ; PRINT NOP OP CODE
-    BRA     CLEAR_INSTRUCTION
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 MOVE:
-    BRA     CLEAR_INSTRUCTION
+    ** GET SIZE 3**
+    MOVE.W  D7, D1
+    MOVE.B  #2, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET DESTINATION Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET DESTINATION MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_MODE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+
+    ** PRINT INSTRUCTION **
+    LEA     OPC_MOVE, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     GET_DEST_MODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
     
 JSR:
-    BRA     CLEAR_INSTRUCTION
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_JSR, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 MOVEM:
-    BRA     CLEAR_INSTRUCTION
+    ** GET DIRECTION **
+    ** REGISTER TO MEMORY (0) OR MEMORY TO REGISTER (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #5, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 2**
+    MOVE.W  D7, D1
+    MOVE.B  #2, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #9, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_MOVEM, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE2
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 LEA:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS ADDRESS REGISTER **
+    ** GET DESTINATION An **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #9, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_LEA, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 NOT:
-    BRA     CLEAR_INSTRUCTION
+    ** GET SIZE 1**
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #9, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_LEA, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 BLT:
-    BRA     CLEAR_INSTRUCTION
+    ** DISPLACMENT CAN BE UP TO 1 LONGWORD **
+    ** GET DISPLACMENET **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #8, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BLT, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_HEX
+    BSR     GET_DISPLACEMENT
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 BGE:
-    BRA     CLEAR_INSTRUCTION
+    ** DISPLACMENT CAN BE UP TO 1 LONGWORD **
+    ** GET DISPLACMENET **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #8, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BGE, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_HEX
+    BSR     GET_DISPLACEMENT
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 BEQ:
-    BRA     CLEAR_INSTRUCTION
+    ** DISPLACMENT CAN BE UP TO 1 LONGWORD **
+    ** GET DISPLACMENET **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #8, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BEQ, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_HEX
+    BSR     GET_DISPLACEMENT
+
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 BRA:
-    BRA     CLEAR_INSTRUCTION
+    ** DISPLACMENT CAN BE UP TO 1 LONGWORD **
+    ** GET DISPLACMENET **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #8, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DISPLACEMENT
+    
+    LEA     OPC_BRA, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_HEX
+    BSR     GET_DISPLACEMENT
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 DIVU:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS DATA REGISTER **
+    ** GET DESTINATION Dn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_DIVU, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 SUB:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS DATA REGISTER **
+    ** GET DESTINATION Dn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET DIRECTION **
+    ** Dn ea -> Dn (0) or ea Dn -> ea (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 3 **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_SUB, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 MULS:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS DATA REGISTER **
+    ** GET DESTINATION Dn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_MULS, A1
+    BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 AND:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS DATA REGISTER **
+    ** GET DESTINATION Dn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET DIRECTION **
+    ** Dn ea -> Dn (0) or ea Dn -> ea (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 1 **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_AND, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 ADD:
-    BRA     CLEAR_INSTRUCTION
+    ** DESTINATION ALWAYS DATA REGISTER **
+    ** GET DESTINATION Dn **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DESTINATION_XN
+    ** GET DIRECTION **
+    ** Dn ea -> Dn (0) or ea Dn -> ea (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 3 **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    LEA     OPC_ADD, A1
+    BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE3
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 LSD_IMMEDIATE:
-    BRA     CLEAR_INSTRUCTION
+    ** GET DIRECTION **
+    ** Right (0) or Left (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_LSL/LSR, A1
+    ;BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 LSD_REGISTER:
-    BRA     CLEAR_INSTRUCTION
+    ** GET COUNT/REGISTER **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, COUNT_REGISTER
+    ** GET DIRECTION **
+    ** Right (0) or Left (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 1 **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET ROTATION **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, ROTATION
+    ** SOURCE REGISTER ALWAYS DATA REGISTER **
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_LSL/LSR, A1
+    ;BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 ASD_IMMEDIATE:
-    BRA     CLEAR_INSTRUCTION
+    ** GET DIRECTION **
+    ** Right (0) or Left (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SOURCE MODE **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_MODE
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_ASL/ASR, A1
+    ;BSR     PRINT_OPCODE
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 ASD_REGISTER:
-    BRA     CLEAR_INSTRUCTION
+    ** GET COUNT/REGISTER **
+    MOVE.W  D7, D1
+    MOVE.B  #4, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, COUNT_REGISTER
+    ** GET DIRECTION **
+    ** Right (0) or Left (1)**
+    MOVE.W  D7, D1
+    MOVE.B  #7, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, DIRECTION
+    ** GET SIZE 1 **
+    MOVE.W  D7, D1
+    MOVE.B  #8, D2
+    MOVE.B  #2, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SIZE
+    ** GET ROTATION **
+    MOVE.W  D7, D1
+    MOVE.B  #10, D2
+    MOVE.B  #1, D3
+    BSR     GET_BITS
+    MOVE.B  D1, ROTATION
+    ** SOURCE REGISTER ALWAYS DATA REGISTER **
+    ** GET SOURCE Xn **
+    MOVE.W  D7, D1
+    MOVE.B  #13, D2
+    MOVE.B  #3, D3
+    BSR     GET_BITS
+    MOVE.B  D1, SOURCE_XN
+    
+    ;LEA     OPC_ASL/ASR, A1
+    ;BSR     PRINT_OPCODE
+    BSR     PRINT_SIZE1
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 INVALID:
     ** PRINT INVALID INSTRUCTION **
-    BRA     CLEAR_INSTRUCTION
+    LEA     INSTRUCTION_ERROR, A1
+    MOVE.B  #13, D0
+    TRAP    #15
+    BRA     CLEAR_INSTRUCTION_MEMORY
 
 **-----------END INSTRUCTION DISASSEMBLY----------**
-MOVE_SIZE:
-    
-    ;LSL.L    #2,A2                 ;SHIFT LEFT BY 2 BITS TO GET RID OF FIRST 2 BITS
-    ;LSR.L    #8,A2                 ;SHIFT RIGHT BY 8 WHERE WE ARE STORING THE INSTRUCTION
-    ;LSR.L    #6,A2                 ;SHIFT RIGHT BY 6 WHERE WE ARE STORING THE INSTRUCTION
-    
-    ;CMP.B  #%00000001,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
-    ;BEQ    BYTE_SIZE               ;GOES TO BRANCH FOR BYTE SIZE
 
-    ;CMP.B  #%00000011,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
-    ;BEQ    WORD_SIZE               ;GOES TO BRANCH FOR WORD SIZE
-    
-    ;CMP.B  #%00000010,A2           ;COMPARES HEX INSTRUCTION FOR THE BYTE VALUE OF MOVE
-    ;BEQ    LONG_SIZE               ;GOES TO BRANCH FOR LONG SIZE
+**---------------PRINT OPCODE---------------------**
+** PRINT OPCODE LOADED IN A1
+PRINT_OPCODE:
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
 
+**---------------PRINT NEWLINE--------------------**
+PRINT_NEWLINE:
+    LEA     VAR_NEW_LINE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**---------------PRINT COMMA----------------------**
+PRINT_COMMA:
+    LEA     VAR_COMMA, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**---------------PRINT HEX----------------------**
+PRINT_HEX:
+    LEA     VAR_HEX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**---------------PRINT BASE 16--------------------**
+** PRINT THE VALUE IN D1 IN BASE 16
+** USED FOR PRINTING IMMEDIATE VALUES OR ADDRESSES
+PRINT_BASE16:
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    RTS
+
+**---------------GET BCC DISPLACEMENT--------------------**
+
+GET_DISPLACEMENT:
+    MOVE.B  (DISPLACEMENT), D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_WORD_DISPLACEMENT
+    CMP.B   #$FF, D1
+    BEQ     PRINT_LONG_DISPLACEMENT
+    BRA     PRINT_BYTE_DISPLACEMENT
+
+PRINT_WORD_DISPLACEMENT:
+    MOVE.W (A6)+,D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15 
+    RTS
     
+PRINT_LONG_DISPLACEMENT:
+    MOVE.L (A6)+,D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15 
+    RTS
+
+PRINT_BYTE_DISPLACEMENT:
+    MOVE.B  (DISPLACEMENT), D1
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15 
+    RTS
+
+**-------------------GET MODE---------------------**
+** ARGUMENTS:
+* D1: SOURCE MODE
+*   D1: MODE OF SOURCE REGISTER
+GET_SOURCE_MODE:
+    MOVE.B  SOURCE_MODE, D1
+    CMP.B   #$00, D1
+    BEQ     S_DATA_REGISTER
+    CMP.B   #$01, D1
+    BEQ     S_ADDRESS_REG_DIRECT
+    CMP.B   #$02, D1
+    BEQ     S_ADDRESS_REG_INDIRECT
+    CMP.B   #$03, D1
+    BEQ     S_ADDRESS_REG_POSTINC
+    CMP.B   #$04, D1
+    BEQ     S_ADDRESS_REG_PREDEC
+    CMP.B   #$07, D1
+    BEQ     S_IMM_ABS_WORD_LONG       ; NEED Xn TO DETERMINE
+    BRA     INVALID
+
+S_DATA_REGISTER:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_D0
+    CMP.B   #$01, D1
+    BEQ     PRINT_D1
+    CMP.B   #$02, D1
+    BEQ     PRINT_D2
+    CMP.B   #$03, D1
+    BEQ     PRINT_D3
+    CMP.B   #$04, D1
+    BEQ     PRINT_D4
+    CMP.B   #$05, D1
+    BEQ     PRINT_D5
+    CMP.B   #$06, D1
+    BEQ     PRINT_D6
+    CMP.B   #$07, D1
+    BEQ     PRINT_D7
+    BRA     INVALID
+    
+S_ADDRESS_REG_DIRECT:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7
+    BRA     INVALID
+    
+S_ADDRESS_REG_INDIRECT:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_IND
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_IND
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_IND
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_IND
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_IND
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_IND
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_IND
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_IND
+    BRA     INVALID
+    
+S_ADDRESS_REG_POSTINC:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_POSTINC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_POSTINC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_POSTINC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_POSTINC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_POSTINC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_POSTINC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_POSTINC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_POSTINC
+    BRA     INVALID
+
+S_ADDRESS_REG_PREDEC:
+    MOVE.B  SOURCE_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_PREDEC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_PREDEC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_PREDEC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_PREDEC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_PREDEC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_PREDEC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_PREDEC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_PREDEC
+    BRA     INVALID
+S_IMM_ABS_WORD_LONG:
+    ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+
+**-------------------GET MODE---------------------**
+** ARGUMENTS:
+* D1: SOURCE MODE
+*   D1: MODE OF SOURCE REGISTER
+GET_DEST_MODE:
+    MOVE.B  DESTINATION_MODE, D1
+    CMP.B   #$00, D1
+    BEQ     D_DATA_REGISTER
+    CMP.B   #$01, D1
+    BEQ     D_ADDRESS_REG_DIRECT
+    CMP.B   #$02, D1
+    BEQ     D_ADDRESS_REG_INDIRECT
+    CMP.B   #$03, D1
+    BEQ     D_ADDRESS_REG_POSTINC
+    CMP.B   #$04, D1
+    BEQ     D_ADDRESS_REG_PREDEC
+    CMP.B   #$07, D1
+    BEQ     D_IMM_ABS_WORD_LONG       ; NEED Xn TO DETERMINE
+    BRA     INVALID
+
+D_DATA_REGISTER:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_D0
+    CMP.B   #$01, D1
+    BEQ     PRINT_D1
+    CMP.B   #$02, D1
+    BEQ     PRINT_D2
+    CMP.B   #$03, D1
+    BEQ     PRINT_D3
+    CMP.B   #$04, D1
+    BEQ     PRINT_D4
+    CMP.B   #$05, D1
+    BEQ     PRINT_D5
+    CMP.B   #$06, D1
+    BEQ     PRINT_D6
+    CMP.B   #$07, D1
+    BEQ     PRINT_D7
+    BRA     INVALID
+
+D_ADDRESS_REG_DIRECT:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7
+    BRA     INVALID
+    
+D_ADDRESS_REG_INDIRECT:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_IND
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_IND
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_IND
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_IND
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_IND
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_IND
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_IND
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_IND
+    BRA     INVALID
+    
+D_ADDRESS_REG_POSTINC:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_POSTINC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_POSTINC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_POSTINC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_POSTINC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_POSTINC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_POSTINC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_POSTINC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_POSTINC
+    BRA     INVALID
+D_ADDRESS_REG_PREDEC:
+    MOVE.B  DESTINATION_XN, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_A0_PREDEC
+    CMP.B   #$01, D1
+    BEQ     PRINT_A1_PREDEC
+    CMP.B   #$02, D1
+    BEQ     PRINT_A2_PREDEC
+    CMP.B   #$03, D1
+    BEQ     PRINT_A3_PREDEC
+    CMP.B   #$04, D1
+    BEQ     PRINT_A4_PREDEC
+    CMP.B   #$05, D1
+    BEQ     PRINT_A5_PREDEC
+    CMP.B   #$06, D1
+    BEQ     PRINT_A6_PREDEC
+    CMP.B   #$07, D1
+    BEQ     PRINT_A7_PREDEC
+    BRA     INVALID
+D_IMM_ABS_WORD_LONG:
+    ** GET XN VALUE TO DERETMINE IF IMMEDIATE, ABSOLUTE LONG OR ABSOLUTE WORD **
+
+**----------------PRINT DATA REGISTER-------------**
+PRINT_D0:
+    LEA     DATA_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D1:
+    LEA     DATA_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D2:
+    LEA     DATA_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D3:
+    LEA     DATA_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D4:
+    LEA     DATA_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D5:
+    LEA     DATA_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D6:
+    LEA     DATA_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_D7:
+    LEA     DATA_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+**----------------PRINT ADDRESS REGISTER-------------**
+PRINT_A0:
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1:
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2:
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3:
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4:
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5:
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6:
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7:
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+*----------------PRINT ADDRESS REGISTER INDIRECT-------------**
+PRINT_A0_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_IND:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+*----------------PRINT ADDRESS REGISTER POSTINCREMENT-------------**
+PRINT_A0_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_POSTINC:
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_PLUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+*----------------PRINT ADDRESS REGISTER PREDECREMENT-------------**
+PRINT_A0_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A1_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A2_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A3_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A4_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A5_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A6_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_A7_PREDEC:
+    LEA     VAR_MINUS, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_OPEN_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    LEA     VAR_CLOSE_PAREN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+**-------------------GET SIZE---------------------**
+** USES SIZE IN SIZE MEMORY LOCATION**
+PRINT_SIZE1:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_BYTE
+    CMP.B   #$01, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$02, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
+    
+PRINT_SIZE2:
+    MOVE.B  SIZE, D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$01, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
+    
+    
+PRINT_SIZE3:
+    MOVE.B  SIZE, D1
+    CMP.B   #$01, D1
+    BEQ     PRINT_BYTE
+    CMP.B   #$03, D1
+    BEQ     PRINT_WORD
+    CMP.B   #$02, D1
+    BEQ     PRINT_LONG
+    BRA     INVALID
+
+PRINT_BYTE:
+    LEA     VAR_BYTE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
+PRINT_WORD:
+    LEA     VAR_WORD, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+PRINT_LONG:
+    LEA     VAR_LONG, A1
+    MOVE.B  #14, D0
+    TRAP    #15    
+    RTS
+   
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
@@ -556,40 +1861,58 @@ VAR_ADDR_REG        	   DC.L        'A',0		* Symbol used for formatting
 VAR_COM                    DC.L        ',',0        * Symbol used for formatting
 VAR_DATA                   DC.B        'DATA    ',0	* For Data Errors
 
-ADDR_SEVEN                 DC.L        'A7,',0
-ADDR_SIX                   DC.L        'A6,',0
-ADDR_FIVE                  DC.L        'A5,',0
-ADDR_FOUR                  DC.L        'A4,',0
-ADDR_THREE                 DC.L        'A3,',0
-ADDR_TWO                   DC.L        'A2,',0
-ADDR_ONE                   DC.L        'A1,',0
-ADDR_ZERO                  DC.L        'A0,',0
+ADDR_SEVEN                 DC.L        'A7',0
+ADDR_SIX                   DC.L        'A6',0
+ADDR_FIVE                  DC.L        'A5',0
+ADDR_FOUR                  DC.L        'A4',0
+ADDR_THREE                 DC.L        'A3',0
+ADDR_TWO                   DC.L        'A2',0
+ADDR_ONE                   DC.L        'A1',0
+ADDR_ZERO                  DC.L        'A0',0
 
-DATA_SEVEN                 DC.L        'D7,',0
-DATA_SIX                   DC.L        'D6,',0
-DATA_FIVE                  DC.L        'D5,',0
-DATA_FOUR                  DC.L        'D4,',0
-DATA_THREE                 DC.L        'D3,',0
-DATA_TWO                   DC.L        'D2,',0
-DATA_ONE                   DC.L        'D1,',0
-DATA_ZERO                  DC.L        'D0,',0
+DATA_SEVEN                 DC.L        'D7',0
+DATA_SIX                   DC.L        'D6',0
+DATA_FIVE                  DC.L        'D5',0
+DATA_FOUR                  DC.L        'D4',0
+DATA_THREE                 DC.L        'D3',0
+DATA_TWO                   DC.L        'D2',0
+DATA_ONE                   DC.L        'D1',0
+DATA_ZERO                  DC.L        'D0',0
 
 INSTRUCTION_PROMPT  DC.B    'ENTER HEX INSTRUCTION: ',0
 ERROR               DC.B    'INPUT ERROR',CR,LF,0
-GET_START_ADDRESS   DC.B    'ENTER START ADDRESS IN HEX: ', 0
-GET_END_ADDRESS     DC.B    'ENTER END ADDRESS IN HEX: ', 0
-TEST_FAIL           DC.B    'ASSERT FAILED: ', 0           
-TEST_SUCC           DC.B    'ASSERT SUCCESSFUL: ', 0
+INSTRUCTION_ERROR   DC.B    'INVALID INSTRUCTION',CR,LF,0
+GET_START_ADDRESS   DC.B    'ENTER START ADDRESS IN LONG HEX FORMAT: ',0
+GET_END_ADDRESS     DC.B    'ENTER END ADDRESS IN LONG HEX FORMAT: ',0
+TEST_FAIL           DC.B    'ASSERT FAILED: ',0           
+TEST_SUCC           DC.B    'ASSERT SUCCESSFUL: ',0
 
-FIRST_FOUR_NYBBLE   DS.B    1       ; DECLARE 1 BYTE FOR LENGTH 
+**-------------------MEMORY FOR OPCODE DECOMPOSITION----------------**
+FIRST_FOUR_NYBBLE   DS.B    1       ; DECLARE 1 BYTE FOR FIRST NYBBLE
+DESTINATION_MODE    DS.B    1       ; DECLARE 1 BYTE FOR DESTINATION MODE
+DESTINATION_XN      DS.B    1       ; DECLARE 1 BYTE FOR DESTINATION Xn
+SOURCE_MODE         DS.B    1       ; DECLARE 1 BYTE FOR SOURCE MODE
+SOURCE_XN           DS.B    1       ; DELCARE 1 BYTE FOR SOURCE Xn
+SIZE                DS.B    1       ; DECLARE 1 BYTE FOR SIZE
+DIRECTION           DS.B    1       ; DECLARE 1 BYTE FOR DIRECTION
+ROTATION            DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD ROTATION
+COUNT_REGISTER      DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD COUNT/REGISTER
+DISPLACEMENT        DS.B    1       ; DECLARE UP TO 1 LONGWORD FOR BCC DISPLACEMENT    
+
 INSTRUCTION_LENGTH  DS.W    1       ; DECLARE 1 BYTE FOR LENGTH
 ASCII_INSTRUCTION   DS.W    10      ; DECLARE UP TO 10 WORDS FOR ASCII INSTRUCTION
+INSTRUCTION_BREAK   DS.B    1       ; BREAK ASCII INSTRUCTION AND HEX INSTRUCTION IN MEMORY
 INSTRUCTION         DS.W    5       ; DECLARE UP TO 5 WORDS FOR HEX INSTRUCTION
 START_ADDRESS       DS.L    1       ; DECLARE START ADDRESS
 END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
+
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
+
+
+
 
 
 
