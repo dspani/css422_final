@@ -450,7 +450,7 @@ CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
     CLR.L   D5
     CLR.L   D6
     CLR.L   D7
-    RTS
+    BRA     MAIN
 
 **-----------BEGIN INSTRUCTION DISASSEMBLY----------**
 ; ** FOR THE FOLLOWING, THE INSTRUCTION MUST BE LOADED
@@ -565,7 +565,10 @@ MOVEM:
     LEA     OPC_MOVEM, A1
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE2
-    
+    BSR     MOVEM_SUBR
+    END_LIST_MASK:
+    BSR     PRINT_COMMA
+    BSR     GET_SOURCE_MODE
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -719,7 +722,7 @@ DIVU:
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 SUB:
-    ** DESTINATION ALWAYS DATA REGISTER **
+    ** DESTINATION BASED ON OPMODE REGISTER **
     ** GET DESTINATION Dn **
     MOVE.W  D7, D1
     MOVE.B  #4, D2
@@ -1047,6 +1050,13 @@ PRINT_HEX:
     MOVE.B  #14, D0
     TRAP    #15
     RTS
+    
+**---------------PRINT SLASH----------------------**
+PRINT_SLASH:
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS  
 
 **---------------PRINT BASE 16--------------------**
 ** PRINT THE VALUE IN D1 IN BASE 16
@@ -1056,7 +1066,842 @@ PRINT_BASE16:
     MOVE.B  #16, D2
     TRAP    #15
     RTS
+    
+**----------------MOVEM SUBROUTINES----------------**
+** USES DIRECTION AND LIST MASK TO DETERMINE OUTPUT
+** MOVEM HAS VARIABLES:
+**  DIRECTION
+**  SIZE 2
+**  SOURCE_MODE
+**  SOURCE_XN
+MOVEM_SUBR:
+    MOVE.W (A6)+, MOVEM_LIST_MASK
+    MOVE.B  DIRECTION, D1
+    CMP.B   #$00, D1
+    BEQ     REG_TO_MEM      ; REGISTER TO MEMORY IF DIRECTION IS 0
+    CMP.B   #$01, D1
+    BEQ     MEM_TO_REG      ; MEMORY TO REGISTER IF DIRECTION IS 1
+    BRA     INVALID
 
+REG_TO_MEM:
+    MOVE.B  SOURCE_MODE, D1
+    CMP.B   #$04, D1        ; CHECK IF MODE IS PREDECREMENT
+    BEQ     DA_LIST_MASK
+    BRA     AD_LIST_MASK
+    
+MEM_TO_REG:
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    MOVE.B  SOURCE_MODE, D1
+    CMP.B   #$04, D1        ; CHECK IF MODE IS PREDECREMENT
+    BEQ     DA_LIST_MASK
+    BSR     AD_LIST_MASK
+    
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY
+
+
+AD_LIST_MASK:
+** LIST MASK ORDER: **
+** A7 A6 A5 A4 A3 A2 A1 A0 D7 D6 D5 D4 D3 D2 D1 D0 **
+    MOVE.W  (MOVEM_LIST_MASK), D5
+    MOVE.W  D5, D6
+    BSR     GET_LAST_REG                ; RETURNS POSITION OF LAST REGISTER BIT AT D2
+    AND.W   #%0000000000000001, D6
+    CMP.W   #%0000000000000001, D6
+    BEQ     MOVEM_D0        
+    END_D0:                 
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_0    
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_0:
+    SUB.B   #1, D2           
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000000000010, D6
+    CMP.W   #%0000000000000010, D6
+    BEQ     MOVEM_D1
+    END_D1:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_1
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_1:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000000100, D6
+    CMP.W   #%0000000000000100, D6
+    BEQ     MOVEM_D2
+    END_D2:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_2
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_2:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000001000, D6
+    CMP.W   #%0000000000001000, D6
+    BEQ     MOVEM_D3
+    END_D3:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_3
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_3:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000010000, D6
+    CMP.W   #%0000000000010000, D6
+    BEQ     MOVEM_D4
+    END_D4:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_4
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_4:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000000100000, D6
+    CMP.W   #%0000000000100000, D6
+    BEQ     MOVEM_D5
+    END_D5:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_5
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_5:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000001000000, D6
+    CMP.W   #%0000000001000000, D6
+    BEQ     MOVEM_D6
+    END_D6:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_6
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_6:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6    
+    AND.W   #%0000000010000000, D6
+    CMP.W   #%0000000010000000, D6
+    BEQ     MOVEM_D7
+    END_D7:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_7
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_7:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000100000000, D6
+    CMP.W   #%0000000100000000, D6
+    BEQ     MOVEM_A0        
+    END_A0:                 
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_8    
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_8: 
+    SUB.B   #1, D2           
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000001000000000, D6
+    CMP.W   #%0000001000000000, D6
+    BEQ     MOVEM_A1
+    END_A1:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_9
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_9:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000010000000000, D6
+    CMP.W   #%0000010000000000, D6
+    BEQ     MOVEM_A2
+    END_A2:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_10
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_10:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000100000000000, D6
+    CMP.W   #%0000100000000000, D6
+    BEQ     MOVEM_A3
+    END_A3:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_11
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_11:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0001000000000000, D6
+    CMP.W   #%0001000000000000, D6
+    BEQ     MOVEM_A4
+    END_A4:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_12
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_12:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0010000000000000, D6
+    CMP.W   #%0010000000000000, D6
+    BEQ     MOVEM_A5
+    END_A5:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_13
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_13:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0100000000000000, D6
+    CMP.W   #%0100000000000000, D6
+    BEQ     MOVEM_A6
+    END_A6:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_14
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_14:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6    
+    AND.W   #%1000000000000000, D6
+    CMP.W   #%1000000000000000, D6
+    BEQ     MOVEM_A7
+    END_A7:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_15
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_15:
+    END_MASK:
+    RTS
+
+
+
+DA_LIST_MASK:   ; PREDECREMENT MODE
+** LIST MASK ORDER: **
+** D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 A7 * *
+    MOVE.W  (MOVEM_LIST_MASK), D5
+    MOVE.W  D5, D6
+    BSR     GET_LAST_REG                ; RETURNS POSITION OF LAST REGISTER BIT AT D2
+    AND.W   #%0000000000000001, D6
+    CMP.W   #%0000000000000001, D6
+    BEQ     MOVEM_A7_DA        
+    END_A7_DA:                 
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_0_DA   
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_0_DA:
+    SUB.B   #1, D2           
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000000000010, D6
+    CMP.W   #%0000000000000010, D6
+    BEQ     MOVEM_A6_DA
+    END_A6_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_1_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_1_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000000100, D6
+    CMP.W   #%0000000000000100, D6
+    BEQ     MOVEM_A5_DA
+    END_A5_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_2_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_2_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000001000, D6
+    CMP.W   #%0000000000001000, D6
+    BEQ     MOVEM_A4_DA
+    END_A4_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_3_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_3_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0000000000010000, D6
+    CMP.W   #%0000000000010000, D6
+    BEQ     MOVEM_A3_DA
+    END_A3_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_4_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_4_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000000100000, D6
+    CMP.W   #%0000000000100000, D6
+    BEQ     MOVEM_A2_DA
+    END_A2_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_5_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_5_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000001000000, D6
+    CMP.W   #%0000000001000000, D6
+    BEQ     MOVEM_A1_DA
+    END_A1_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_6_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_6_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6    
+    AND.W   #%0000000010000000, D6
+    CMP.W   #%0000000010000000, D6
+    BEQ     MOVEM_A0_DA
+    END_A0_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_7_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_7_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000000100000000, D6
+    CMP.W   #%0000000100000000, D6
+    BEQ     MOVEM_D7_DA       
+    END_D7_DA:                 
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_8_DA   
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_8_DA: 
+    SUB.B   #1, D2           
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000001000000000, D6
+    CMP.W   #%0000001000000000, D6
+    BEQ     MOVEM_D6_DA
+    END_D6_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_9_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_9_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000010000000000, D6
+    CMP.W   #%0000010000000000, D6
+    BEQ     MOVEM_D5_DA
+    END_D5_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_10_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_10_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0000100000000000, D6
+    CMP.W   #%0000100000000000, D6
+    BEQ     MOVEM_D4_DA
+    END_D4_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_11_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_11_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+    
+    MOVE.W  D5, D6
+    AND.W   #%0001000000000000, D6
+    CMP.W   #%0001000000000000, D6
+    BEQ     MOVEM_D3_DA
+    END_D3_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_12_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_12_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6
+    AND.W   #%0010000000000000, D6
+    CMP.W   #%0010000000000000, D6
+    BEQ     MOVEM_D2_DA
+    END_D2_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_13_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_13_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D1
+
+    MOVE.W  D5, D6
+    AND.W   #%0100000000000000, D6
+    CMP.W   #%0100000000000000, D6
+    BEQ     MOVEM_D1_DA
+    END_D1_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_14_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_14_DA:
+    SUB.B   #1, D2 
+    MOVE.B  #$00, D4
+
+    MOVE.W  D5, D6    
+    AND.W   #%1000000000000000, D6
+    CMP.W   #%1000000000000000, D6
+    BEQ     MOVEM_D0_DA
+    END_D0_DA:
+    
+    CMP.B   #$00, D4
+    BEQ     SKIP_SLASH_15_DA
+    CMP.B   #$00, D2
+    BEQ     END_MASK
+    LEA     MOVEM_SLASH, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    SKIP_SLASH_15_DA:
+    END_MASK_DA:
+    RTS
+
+
+GET_LAST_REG:
+    MOVE.B  #16, D2
+    MOVE.W  D5, D3
+    REG_START:
+    CMP.W   #$0000, D3
+    BEQ     INVALID
+    SUB.B   #1, D2
+    LSL.W   #1, D3
+    BCS     CARRY_SET
+    BRA     REG_START
+    * BRANCH IS 1 SHIFTED OUT FRONT
+    * RETURNS POSITION OF LAST REGISTER IN D2
+    CARRY_SET:
+    RTS
+
+MOVEM_D0:
+    LEA     DATA_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15 
+    MOVE.B  #1, D4
+    BRA     END_D0
+    
+MOVEM_D1:
+    LEA     DATA_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D1
+    
+MOVEM_D2:
+    LEA     DATA_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D2 
+    
+MOVEM_D3:
+    LEA     DATA_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D3
+
+MOVEM_D4:
+    LEA     DATA_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D4
+    
+MOVEM_D5:
+    LEA     DATA_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D5
+    
+MOVEM_D6:
+    LEA     DATA_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D6
+    
+MOVEM_D7:
+    LEA     DATA_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D7
+    
+MOVEM_A0:
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15 
+    MOVE.B  #1, D4
+    BRA     END_A0
+    
+MOVEM_A1:
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A1
+    
+MOVEM_A2:
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A2 
+    
+MOVEM_A3:
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A3
+
+MOVEM_A4:
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A4
+    
+MOVEM_A5:
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A5
+    
+MOVEM_A6:
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A6
+    
+MOVEM_A7:
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A7
+
+** PREDECREMENT MODE PRINT FUNCTIONS BELOW **
+
+MOVEM_D0_DA:
+    LEA     DATA_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15 
+    MOVE.B  #1, D4
+    BRA     END_D0_DA
+    
+MOVEM_D1_DA:
+    LEA     DATA_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D1_DA
+    
+MOVEM_D2_DA:
+    LEA     DATA_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D2_DA 
+    
+MOVEM_D3_DA:
+    LEA     DATA_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D3_DA
+
+MOVEM_D4_DA:
+    LEA     DATA_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D4_DA
+    
+MOVEM_D5_DA:
+    LEA     DATA_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D5_DA
+    
+MOVEM_D6_DA:
+    LEA     DATA_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D6_DA
+    
+MOVEM_D7_DA:
+    LEA     DATA_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_D7_DA
+    
+MOVEM_A0_DA:
+    LEA     ADDR_ZERO, A1
+    MOVE.B  #14, D0
+    TRAP    #15 
+    MOVE.B  #1, D4
+    BRA     END_A0_DA
+    
+MOVEM_A1_DA:
+    LEA     ADDR_ONE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A1_DA
+    
+MOVEM_A2_DA:
+    LEA     ADDR_TWO, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A2_DA 
+    
+MOVEM_A3_DA:
+    LEA     ADDR_THREE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A3_DA
+
+MOVEM_A4_DA:
+    LEA     ADDR_FOUR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A4_DA
+    
+MOVEM_A5_DA:
+    LEA     ADDR_FIVE, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A5_DA
+    
+MOVEM_A6_DA:
+    LEA     ADDR_SIX, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A6_DA
+    
+MOVEM_A7_DA:
+    LEA     ADDR_SEVEN, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    MOVE.B  #1, D4
+    BRA     END_A7_DA
+
+    
 **---------------GET BCC DISPLACEMENT--------------------**
 
 GET_DISPLACEMENT:
@@ -2107,8 +2952,8 @@ SIZE_TYPE           DS.B    1       ; DECLARE 1 BYTE FOR TYPE OF SIZE (1,2,3)
 DIRECTION           DS.B    1       ; DECLARE 1 BYTE FOR DIRECTION
 ROTATION            DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD ROTATION
 COUNT_REGISTER      DS.B    1       ; DECLARE 1 BYTE FOR LSD/ASD COUNT/REGISTER
-DISPLACEMENT        DS.B    1       ; DECLARE UP TO 1 LONGWORD FOR BCC DISPLACEMENT    
-
+DISPLACEMENT        DS.B    1       ; DECLARE UP TO 1 LONGWORD FOR BCC DISPLACEMENT
+MOVEM_LIST_MASK     DS.W    1       ; DECLARE 1 WORD FOR MOVEM LIST MASK    
 INSTRUCTION_LENGTH  DS.W    1       ; DECLARE 1 BYTE FOR LENGTH
 ASCII_INSTRUCTION   DS.W    10      ; DECLARE UP TO 10 WORDS FOR ASCII INSTRUCTION
 INSTRUCTION_BREAK   DS.B    1       ; BREAK ASCII INSTRUCTION AND HEX INSTRUCTION IN MEMORY
