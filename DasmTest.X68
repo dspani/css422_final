@@ -49,7 +49,25 @@ TWO:    MACRO
         \1.\2  D1,         $12345678
         \1.\2  #$12,       $12345678
         ENDM
-
+        
+THREE:  MACRO
+        \1.\2   D0, D2
+        \1.\2  (A1),       D2
+        \1.\2  (A1)+,      D2
+        \1.\2  -(A1),      D2
+        \1.\2  $1234,      D2
+        \1.\2  $12345678,  D2
+        ; ---------------------------------------------------------------------
+        \1.\2  D1,         (A3)
+        ; ---------------------------------------------------------------------
+        \1.\2  D1,         (A3)+
+        ; ---------------------------------------------------------------------
+        \1.\2  D1,         -(A3)
+         ; ---------------------------------------------------------------------
+        \1.\2  D1,         $1234
+        ; ---------------------------------------------------------------------
+        \1.\2  D1,         $12345678
+        ENDM
         ; =====================================================================
         ; Test LEA.
         ; =====================================================================
@@ -110,74 +128,75 @@ tMOVEM:     MACRO
 
         ORG     $100
         
-main:   NOP
-        RTS
+main:   NOP                     ; PASS
+        RTS                     ; PASS
 
-        ONE     NOT, B
-        ONE     NOT, W
-        ONE     NOT, L
+        ONE     NOT, B          ; PASS
+        ONE     NOT, W          ; PASS
+        ONE     NOT, L          ; PASS
         
-        TWO     ADD, B
-        TWO     ADD, W
-        TWO     ADD, L
+        THREE     ADD, B        ; PASS
+        THREE     ADD, W        ; PASS
+        THREE     ADD, L        ; PASS
         
-        TWO     SUB, B
-        TWO     SUB, W
-        TWO     SUB, L
+        THREE     SUB, B        ; PASS
+        THREE     SUB, W        ; PASS
+        THREE     SUB, L        ; PASS
         
-        TWO     AND, B
-        TWO     AND, W
-        TWO     AND, L
+        THREE     AND, B        ; PASS
+        THREE     AND, W        ; PASS
+        THREE     AND, L        ; PASS
         
-        TWO     MOVE, B
-        TWO     MOVE, W
-        TWO     MOVE, L
+        TWO     MOVE, B         ; PASS
+        TWO     MOVE, W         ; PASS
+        TWO     MOVE, L         ; PASS
         
-        tSHIFT  LSL, B
-        tSHIFT  LSL, W
-        tSHIFT  LSL, L
+        ;tSHIFT  LSL, B
+        ;tSHIFT  LSL, W
+        ;tSHIFT  LSL, L
        
-        tSHIFT  LSR, B
-        tSHIFT  LSR, W
-        tSHIFT  LSR, L        
+        ;tSHIFT  LSR, B
+        ;tSHIFT  LSR, W
+        ;tSHIFT  LSR, L        
 
-        tSHIFT  ASL, B
-        tSHIFT  ASL, W
-        tSHIFT  ASL, L        
+        ;tSHIFT  ASL, B
+        ;tSHIFT  ASL, W
+        ;tSHIFT  ASL, L        
 
-        tSHIFT  ASR, B
-        tSHIFT  ASR, W
-        tSHIFT  ASR, L 
+        ;tSHIFT  ASR, B
+        ;tSHIFT  ASR, W
+        ;tSHIFT  ASR, L 
         
-        tLEA
+        tLEA                   ; PASS
         
-        tMULDIV MULS, W
-        tMULDIV DIVU, W
+        tMULDIV MULS, W        ; PASS
+        tMULDIV DIVU, W        ; PASS
 
-        JSR     (A1)
-        JSR     $1234
-        JSR     $12345678
+        JSR     (A1)           ; PASS
+        JSR     $1234          ; PASS
+        JSR     $12345678      ; PASS
         
-L1:     BLT     L1
-        BLT     $12
-        BLT     $1234
+L1:     BLT     L1             ; PASS
+        BLT     $12            ; PASS
+        BLT     $1234          ; PASS
 
-L2:     BGE     L2
-        BGE     $1234
+L2:     BGE     L2             ; PASS
+        BGE     $1234          ; PASS
         
-L3:     BEQ     L3
-        BEQ     $1234
+L3:     BEQ     L3             ; PASS
+        BEQ     $1234          ; PASS
         
-L4:     BRA.B   L4
-        BRA.W   $12
-        BRA.W   $1234
+L4:     BRA.B   L4             ; PASS
+        BRA.W   $12            ; PASS
+        BRA.W   $1234          ; PASS
         
-        tMOVEM
+        tMOVEM                  ; PASS
 
         SIMHALT 
         END     main  
 
     
+
 
 
 

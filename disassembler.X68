@@ -944,7 +944,23 @@ LSD_REGISTER:
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
-
+    
+LSD_ROTATION:
+    MOVE.B  (DIRECTION), D1
+    CMP.B   #$00, D1
+    BEQ     PRINT_LSR
+    CMP.B   #$01, D1
+    BEQ     PRINT_LSL
+    BRA     INVALID
+    
+PRINT_LSR:
+    LEA     OPC_LSR, A1
+    BRA     PRINT_OPCODE    
+    
+PRINT_LSL:
+    LEA     OPC_LSL, A1
+    BRA     PRINT_OPCODE
+    
 ASD_IMMEDIATE:
     ** GET DIRECTION **
     ** Right (0) or Left (1)**
@@ -2868,7 +2884,9 @@ OPC_LEA                    DC.L        'LEA ',0      * Required OP CODE
 OPC_AND                    DC.L        'AND',0      * Required OP CODE
 OPC_NOT                    DC.L        'NOT',0      * Required OP CODE
 OPC_LSL                    DC.L        'LSL',0      * Required OP CODE
+OPC_LSR                    DC.L        'LSR',0      * Required OP CODE
 OPC_ASR                    DC.L        'ASR',0      * Required OP CODE
+OPC_ASL                    DC.L        'ASL',0      * Required OP CODE
 OPC_BLT                    DC.L        'BLT ',0     * Required OP CODE
 OPC_BGE                    DC.L        'BGE ',0     * Required OP CODE
 OPC_BEQ                    DC.L        'BEQ ',0     * Required OP CODE
@@ -2964,6 +2982,8 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
+
 
 
 
