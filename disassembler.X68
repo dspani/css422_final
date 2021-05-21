@@ -730,14 +730,14 @@ SUB:
     BSR     GET_BITS
     MOVE.B  D1, DESTINATION_XN
     ** GET DIRECTION **
-    ** Dn ea -> Dn (0) or ea Dn -> ea (1)**
+    ** Dn - ea -> Dn (0) or ea - Dn -> ea (1)**
     MOVE.W  D7, D1
     MOVE.B  #7, D2
     MOVE.B  #1, D3
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 3 **
-    MOVE.B  #3, SIZE_TYPE
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -758,10 +758,11 @@ SUB:
     
     LEA     OPC_SUB, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_SIZE3
-    
+    BSR     PRINT_SIZE1
+    BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
+    
 
 MULS:
     ** DESTINATION ALWAYS DATA REGISTER **
@@ -830,7 +831,7 @@ AND:
     LEA     OPC_AND, A1
     BSR     PRINT_OPCODE
     BSR     PRINT_SIZE1
-    
+    BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -850,7 +851,7 @@ ADD:
     BSR     GET_BITS
     MOVE.B  D1, DIRECTION
     ** GET SIZE 3 **
-    MOVE.B  #3, SIZE_TYPE
+    MOVE.B  #1, SIZE_TYPE
     MOVE.W  D7, D1
     MOVE.B  #8, D2
     MOVE.B  #2, D3
@@ -871,8 +872,8 @@ ADD:
     
     LEA     OPC_ADD, A1
     BSR     PRINT_OPCODE
-    BSR     PRINT_SIZE3
-    
+    BSR     PRINT_SIZE1
+    BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -899,7 +900,7 @@ LSD_IMMEDIATE:
     
     ;LEA     OPC_LSL/LSR, A1
     ;BSR     PRINT_OPCODE
-    
+    BSR     LSD_ROTATION
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -940,6 +941,7 @@ LSD_REGISTER:
     
     ;LEA     OPC_LSL/LSR, A1
     ;BSR     PRINT_OPCODE
+    BSR     LSD_ROTATION
     BSR     PRINT_SIZE1
     
     BSR     PRINT_NEWLINE
@@ -1083,6 +1085,29 @@ PRINT_BASE16:
     TRAP    #15
     RTS
     
+**-----------GET DIRECTION FOR ADD, AND, SUB-----**
+GET_DIRECTION:
+    MOVE.B  (DIRECTION), D1
+    CMP.B   #$00, D1
+    BEQ     REGULAR_DIRECTION
+    CMP.B   #$01, D1
+    BEQ     FLIP_DIRECTION
+    
+REGULAR_DIRECTION:
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_COMMA
+    BSR     D_DATA_REGISTER
+    BSR     PRINT_NEWLINE
+    BSR     CLEAR_INSTRUCTION_MEMORY
+
+FLIP_DIRECTION:
+    BSR     D_DATA_REGISTER
+    BSR     PRINT_COMMA
+    BSR     GET_SOURCE_MODE
+    BSR     PRINT_NEWLINE
+    BRA     CLEAR_INSTRUCTION_MEMORY    
+
+
 **----------------MOVEM SUBROUTINES----------------**
 ** USES DIRECTION AND LIST MASK TO DETERMINE OUTPUT
 ** MOVEM HAS VARIABLES:
