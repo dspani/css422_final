@@ -151,21 +151,21 @@ main:   NOP                     ; PASS
         TWO     MOVE, W         ; PASS
         TWO     MOVE, L         ; PASS
         
-        ;tSHIFT  LSL, B
-        ;tSHIFT  LSL, W
-        ;tSHIFT  LSL, L
+        tSHIFT  LSL, B
+        tSHIFT  LSL, W
+        tSHIFT  LSL, L
        
-        ;tSHIFT  LSR, B
-        ;tSHIFT  LSR, W
-        ;tSHIFT  LSR, L        
+        tSHIFT  LSR, B
+        tSHIFT  LSR, W
+        tSHIFT  LSR, L        
 
-        ;tSHIFT  ASL, B
-        ;tSHIFT  ASL, W
-        ;tSHIFT  ASL, L        
+        tSHIFT  ASL, B
+        tSHIFT  ASL, W
+        tSHIFT  ASL, L        
 
-        ;tSHIFT  ASR, B
-        ;tSHIFT  ASR, W
-        ;tSHIFT  ASR, L 
+        tSHIFT  ASR, B
+        tSHIFT  ASR, W
+        tSHIFT  ASR, L 
         
         tLEA                   ; PASS
         

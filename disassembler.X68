@@ -900,10 +900,32 @@ LSD_IMMEDIATE:
     
     ;LEA     OPC_LSL/LSR, A1
     ;BSR     PRINT_OPCODE
-    BSR     LSD_ROTATION
+    BSR     LSD_DIRECTION    
+    BSR     GET_SOURCE_MODE
+    
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
+    
+LSD_DIRECTION:
+    MOVE.B  (DIRECTION), D1
+    CMP.B   #$0, D1
+    BEQ     PRINT_LSR
+    CMP.B   #$1, D1
+    BEQ     PRINT_LSL
+    
+PRINT_LSR:
+    LEA     OPC_LSR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
 
+
+PRINT_LSL:
+    LEA     OPC_LSL, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+    
 LSD_REGISTER:
     ** GET COUNT/REGISTER **
     MOVE.W  D7, D1
@@ -941,28 +963,48 @@ LSD_REGISTER:
     
     ;LEA     OPC_LSL/LSR, A1
     ;BSR     PRINT_OPCODE
-    BSR     LSD_ROTATION
-    BSR     PRINT_SIZE1
+    BSR     LSD_DIRECTION 
+    BSR     PRINT_SIZE1  
+    BSR     REGISTER_ROTATION
+    BSR     PRINT_COMMA
+    BSR     S_DATA_REGISTER
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
     
-LSD_ROTATION:
-    MOVE.B  (DIRECTION), D1
-    CMP.B   #$00, D1
-    BEQ     PRINT_LSR
-    CMP.B   #$01, D1
-    BEQ     PRINT_LSL
-    BRA     INVALID
+REGISTER_ROTATION:
+    MOVE.B  (ROTATION),D1
+    CMP.B   #$00,D1
+    BEQ     PRINT_SHIFT_COUNT
+    CMP.B   #$01,D1
+    BEQ     PRINT_DATA_REGISTER
     
-PRINT_LSR:
-    LEA     OPC_LSR, A1
-    BRA     PRINT_OPCODE    
+PRINT_SHIFT_COUNT:
+    LEA     VAR_NUM, A1
+    MOVE.B  #14, D0
+    TRAP    #15
     
-PRINT_LSL:
-    LEA     OPC_LSL, A1
-    BRA     PRINT_OPCODE
-    
+    MOVE.B  (COUNT_REGISTER),D1
+    CMP.B   #$00,D1
+    BEQ     PRINT_SHIFT_COUNT_EIGHT
+    MOVE.B  #15, D0
+    MOVE.B  #16, D2
+    TRAP    #15
+    RTS
+
+
+PRINT_SHIFT_COUNT_EIGHT:
+    LEA     VAR_EIGHT, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+
+PRINT_DATA_REGISTER:
+    MOVE.B  (COUNT_REGISTER),D1
+    BRA D_DATA_REGISTER
+
+
 ASD_IMMEDIATE:
     ** GET DIRECTION **
     ** Right (0) or Left (1)**
@@ -986,9 +1028,32 @@ ASD_IMMEDIATE:
     
     ;LEA     OPC_ASL/ASR, A1
     ;BSR     PRINT_OPCODE
+    BSR     ASD_DIRECTION    
+    BSR     GET_SOURCE_MODE
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
+    
+ASD_DIRECTION:
+    MOVE.B  (DIRECTION), D1
+    CMP.B   #$0, D1
+    BEQ     PRINT_ASR
+    CMP.B   #$1, D1
+    BEQ     PRINT_ASL
+    
+PRINT_ASR:
+    LEA     OPC_ASR, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
+
+PRINT_ASL:
+    LEA     OPC_ASL, A1
+    MOVE.B  #14, D0
+    TRAP    #15
+    RTS
+
 
 ASD_REGISTER:
     ** GET COUNT/REGISTER **
@@ -1027,11 +1092,15 @@ ASD_REGISTER:
     
     ;LEA     OPC_ASL/ASR, A1
     ;BSR     PRINT_OPCODE
-    BSR     PRINT_SIZE1
+    BSR     ASD_DIRECTION 
+    BSR     PRINT_SIZE1  
+    BSR     REGISTER_ROTATION
+    BSR     PRINT_COMMA
+    BSR     S_DATA_REGISTER
     
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
-
+    
 INVALID:
     ** PRINT INVALID INSTRUCTION **
     LEA     INSTRUCTION_ERROR, A1
