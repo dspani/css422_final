@@ -18,25 +18,31 @@ START:                  ; first instruction of program
 
     ; WRITE MOVEM
     MOVE.L  TOTAL_BYTES, D2
+    MOVE.B  #55, D0
+    TRAP    #15
     LEA     OPC_MOVEM, A1
     MOVE.L  #8, D2
-    ADDI    #8, TOTAL_BYTES
+    ADDI.L    #8, TOTAL_BYTES
     MOVE.B  #54, D0
     TRAP    #15
     
     ; WRITE NEW LINE
     MOVE.L  TOTAL_BYTES, D2
+    MOVE.B  #55, D0
+    TRAP    #15
     LEA     VAR_NEW_LINE, A1
     MOVE.L  #2, D2
-    ADDI    #2, TOTAL_BYTES
+    ADDI.L    #2, TOTAL_BYTES
     MOVE.B  #54, D0
     TRAP    #15
     
     ; WRITE NOP
     MOVE.L  TOTAL_BYTES, D2
+    MOVE.B  #55, D0
+    TRAP    #15
     LEA     OPC_NOP, A1
     MOVE.L  #8, D2
-    ADDI    #8, TOTAL_BYTES
+    ADDI.L    #8, TOTAL_BYTES
     MOVE.B  #54, D0
     TRAP    #15
 
@@ -56,6 +62,7 @@ VAR_NEW_LINE               DC.B        '',CR,LF,0   * Symbol used for formatting
 OPC_MOVEM                    DC.L        'MOVEM',0      * Required OP CODE
 OPC_NOP                    DC.L        'NOP',0
     END    START        ; last line of source
+
 
 
 *~Font name~Courier New~

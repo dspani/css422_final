@@ -7,9 +7,13 @@
     ORG    $1000   
 START:
     ;BRA     RUN_TESTS              ; ENABLE THIS LINE FOR UNIT TESTING
-    BSR     INPUT_START_ADDRESS
+    BSR     CLOSE_FILE              ; CLOSE ALL FILES THAT MAY BE OPEN
+    BSR     START_NEW_FILE          ; INIT NEW FILE
+    ;BSR     INPUT_START_ADDRESS
+    MOVE.L  #$00000100, START_ADDRESS
     MOVE.L  (START_ADDRESS), A6
-    BSR     INPUT_END_ADDRESS                
+    MOVE.L  #$00000500, END_ADDRESS
+    ;BSR     INPUT_END_ADDRESS
     BRA     MAIN    ; START DISASSEMBLY
 
 RUN_TESTS:
@@ -45,7 +49,6 @@ ASCII_TO_HEX_TEST_1:
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: 99
     CMP.W   #99, TEST_VAR_2
-    ; TODO: ADD ASSERTION HERE
     RTS
 
 ASCII_TO_HEX_TEST_2:
@@ -53,7 +56,6 @@ ASCII_TO_HEX_TEST_2:
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: 09
-    ; TODO: ADD ASSERTION HERE
     RTS
 
 ASCII_TO_HEX_TEST_3:
@@ -61,7 +63,6 @@ ASCII_TO_HEX_TEST_3:
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: 00FF
-    ; TODO: ADD ASSERTION HERE
     RTS
 
 ASCII_TO_HEX_TEST_4:
@@ -69,7 +70,6 @@ ASCII_TO_HEX_TEST_4:
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: 9B
-    ; TODO: ADD ASSERTION HERE
     RTS
 
 ASCII_TO_HEX_TEST_5:
@@ -77,7 +77,6 @@ ASCII_TO_HEX_TEST_5:
     LEA     TEST_VAR_1, A1
     LEA     TEST_VAR_2, A2
     BSR     ASCII_TO_HEX                ; EXPECTED: INPUT ERROR
-    ; TODO: ADD ASSERTION HERE
     RTS
 
 ; TESTS GET_BITS
@@ -114,6 +113,21 @@ GET_BITS_TEST_5:
     MOVE.B  #15, D2                     ; START FROM 15
     MOVE.B  #1, D3                      ; GET 1 BIT
     BSR     GET_BITS                    ; EXPECTS D1: 0
+    RTS
+
+CLOSE_FILE:
+    MOVE.B  #50, D0
+    TRAP    #15
+    RTS
+
+START_NEW_FILE:
+    MOVE.L  #0, CURR_BYTE               ; INIT CURSOR LOCATION
+
+    ; OPEN NEW FILE
+    LEA     OUTPUT_NAME, A1             ; LOAD FILE NAME
+    MOVE.B  #52, D0
+    TRAP    #15
+    MOVE.L  D1, FID                     ; SAVE FILE ID TO FID
     RTS
 
 **--------GET INSTRUCTION FROM USER---------**
@@ -412,6 +426,7 @@ MAIN:                               ; MAIN LOOP
     SIMHALT
 **------------------END MAIN LOOP----------------**  
 END_DISASSEMBLY:
+    BSR     CLOSE_FILE              ; CLOSE ALL FILE AND SAVE
     SIMHALT
 
 CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
@@ -456,17 +471,22 @@ CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
 ; ** FOR THE FOLLOWING, THE INSTRUCTION MUST BE LOADED
 ; ** IN D7 FOR REMAINDER OF INSTRUCTION DECOMPOSITION
 RTS:
-    LEA     OPC_RTS, A1
-    MOVE.B  #14, D0
-    TRAP    #15                     ; PRINT RTS OP CODE
+    LEA     OPC_RTS, A1         ; LOAD A STRING TO PRINT
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                     ; PRINT RTS OP CODE
     BSR     PRINT_NEWLINE
     BSR     CLEAR_INSTRUCTION_MEMORY
-    BRA     MAIN
     
 NOP:
-    LEA     OPC_NOP, A1
-    MOVE.B  #14, D0
-    TRAP    #15                     ; PRINT NOP OP CODE
+    LEA     OPC_NOP, A1         ; LOAD A STRING TO PRINT
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ;MOVE.B  #14, D0
+    ;TRAP    #15                     ; PRINT NOP OP CODE
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
 
@@ -504,9 +524,11 @@ MOVE:
     MOVE.B  D1, SOURCE_XN
 
     ** PRINT INSTRUCTION **
-    LEA     OPC_MOVE, A1
-    BSR     PRINT_OPCODE
+    LEA     OPC_MOVE, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE3
+
     BSR     GET_SOURCE_MODE
     BSR     PRINT_COMMA
     BSR     GET_DEST_MODE
@@ -529,7 +551,8 @@ JSR:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_JSR, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_SOURCE_MODE
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
@@ -563,7 +586,8 @@ MOVEM:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_MOVEM, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #5, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE2
     BSR     MOVEM_SUBR
     END_LIST_MASK:
@@ -594,7 +618,8 @@ LEA:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_LEA, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_SOURCE_MODE
     BSR     PRINT_COMMA
     BSR     D_ADDRESS_REG_DIRECT
@@ -623,7 +648,8 @@ NOT:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_NOT, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE1
     BSR     GET_SOURCE_MODE
     BSR     PRINT_NEWLINE
@@ -639,7 +665,8 @@ BLT:
     MOVE.B  D1, DISPLACEMENT
     
     LEA     OPC_BLT, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_DISPLACEMENT
     BSR     PRINT_NEWLINE
     BRA     CLEAR_INSTRUCTION_MEMORY
@@ -654,7 +681,8 @@ BGE:
     MOVE.B  D1, DISPLACEMENT
     
     LEA     OPC_BGE, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_DISPLACEMENT
     
     BSR     PRINT_NEWLINE
@@ -670,7 +698,8 @@ BEQ:
     MOVE.B  D1, DISPLACEMENT
     
     LEA     OPC_BEQ, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_DISPLACEMENT
 
     BSR     PRINT_NEWLINE
@@ -686,7 +715,8 @@ BRA:
     MOVE.B  D1, DISPLACEMENT
     
     LEA     OPC_BRA, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #4, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_DISPLACEMENT
     
     BSR     PRINT_NEWLINE
@@ -714,7 +744,8 @@ DIVU:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_DIVU, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #5, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_SOURCE_MODE
     BSR     PRINT_COMMA
     BSR     D_DATA_REGISTER
@@ -757,7 +788,8 @@ SUB:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_SUB, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE1
     BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
@@ -786,7 +818,8 @@ MULS:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_MULS, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #5, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     GET_SOURCE_MODE
     BSR     PRINT_COMMA
     BSR     D_DATA_REGISTER
@@ -829,7 +862,8 @@ AND:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_AND, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE1
     BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
@@ -871,7 +905,8 @@ ADD:
     MOVE.B  D1, SOURCE_XN
     
     LEA     OPC_ADD, A1
-    BSR     PRINT_OPCODE
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
     BSR     PRINT_SIZE1
     BSR     GET_DIRECTION
     BSR     PRINT_NEWLINE
@@ -915,15 +950,18 @@ LSD_DIRECTION:
     
 PRINT_LSR:
     LEA     OPC_LSR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
-
 
 PRINT_LSL:
     LEA     OPC_LSL, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 LSD_REGISTER:
@@ -981,8 +1019,10 @@ REGISTER_ROTATION:
     
 PRINT_SHIFT_COUNT:
     LEA     VAR_NUM, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     
     MOVE.B  (COUNT_REGISTER),D1
     CMP.B   #$00,D1
@@ -995,8 +1035,10 @@ PRINT_SHIFT_COUNT:
 
 PRINT_SHIFT_COUNT_EIGHT:
     LEA     VAR_EIGHT, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
 
 
@@ -1043,17 +1085,19 @@ ASD_DIRECTION:
     
 PRINT_ASR:
     LEA     OPC_ASR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
-
 
 PRINT_ASL:
     LEA     OPC_ASL, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #3, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
-
 
 ASD_REGISTER:
     ** GET COUNT/REGISTER **
@@ -1103,46 +1147,67 @@ ASD_REGISTER:
     
 INVALID:
     ** PRINT INVALID INSTRUCTION **
-    LEA     INSTRUCTION_ERROR, A1
-    MOVE.B  #13, D0
-    TRAP    #15
+    LEA     INSTRUCTION_ERROR, A1   ; LOAD A STRING TO PRINT
+    MOVE.L  #21, D1                  ; WRITE 21 BYTES
+    BSR     PRINT_TO_FILE           ; PRINT TO FILE
+    ; MOVE.B  #13, D0
+    ; TRAP    #15
     BRA     CLEAR_INSTRUCTION_MEMORY
 
 **-----------END INSTRUCTION DISASSEMBLY----------**
 
 **---------------PRINT OPCODE---------------------**
-** PRINT OPCODE LOADED IN A1
-PRINT_OPCODE:
-    MOVE.B  #14, D0
-    TRAP    #15
-    RTS
+; DEPRECATED
+; ** PRINT OPCODE LOADED IN A1
+; PRINT_OPCODE:
+;     MOVE.L  FID, D1             ; LOAD FID
+;     MOVE.L  CURR_BYTE, D2       ; LOAD CURR LOC
+;     MOVE.B  #55, D0
+;     TRAP    #15                 ; SET LOC
+
+;     MOVE.L  #8, D2              ; WRITE 8 BYTES
+;     MOVE.B  #54, D0
+;     TRAP    #15                 ; WRITE RTS
+;     ADDI.L  #8, CURR_BYTE       ; ADD 8 BYTES
+
+;     ;MOVE.B  #14, D0
+;     ;TRAP    #15
+;     RTS
 
 **---------------PRINT NEWLINE--------------------**
 PRINT_NEWLINE:
-    LEA     VAR_NEW_LINE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     VAR_NEW_LINE, A1    ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
 
 **---------------PRINT COMMA----------------------**
 PRINT_COMMA:
-    LEA     VAR_COMMA, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     VAR_COMMA, A1       ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
 
 **---------------PRINT HEX----------------------**
 PRINT_HEX:
     LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 **---------------PRINT SLASH----------------------**
 PRINT_SLASH:
     LEA     MOVEM_SLASH, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS  
 
 **---------------PRINT BASE 16--------------------**
@@ -2222,15 +2287,23 @@ S_IMMEDIATE_SIZE3:
     BEQ     IMMEDIATE_LONG
     BRA     INVALID
 
+PRINT_IMMEDIATE_VAL_HEX:
+    LEA     VAR_NUM, A1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    LEA     VAR_HEX, A1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    RTS
+
 IMMEDIATE_BYTE:
     MOVE.L  #$00000000, D1
-    LEA     VAR_NUM, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "#"
-    LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "$"
-    MOVE.W  (A6)+, D1
+    BSR     PRINT_IMMEDIATE_VAL_HEX
+    MOVE.W  (A6)+, D1       ; TODO: CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15             ; PRINT WORD VALUE
@@ -2238,13 +2311,8 @@ IMMEDIATE_BYTE:
 
 IMMEDIATE_WORD:
     MOVE.L  #$0000000, D1
-    LEA     VAR_NUM, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "#"
-    LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "$"
-    MOVE.W  (A6)+, D1
+    BSR     PRINT_IMMEDIATE_VAL_HEX
+    MOVE.W  (A6)+, D1       ; TODO: CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15
@@ -2252,12 +2320,8 @@ IMMEDIATE_WORD:
 
 IMMEDIATE_LONG:
     LEA     VAR_NUM, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "#"
-    LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15             ; PRINT "$"
-    MOVE.L  (A6)+, D1
+    BSR     PRINT_IMMEDIATE_VAL_HEX
+    MOVE.L  (A6)+, D1       ; TODO: CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15
@@ -2269,9 +2333,11 @@ SOURCE_ABS_LONG:
     ;MOVE.B  #14, D0
     ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT HEX SIGN
-    MOVE.L  (A6)+, D1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15     
+    MOVE.L  (A6)+, D1           ; TODO: CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
@@ -2289,9 +2355,11 @@ SOURCE_ABS_WORD:
     ;MOVE.B  #14, D0
     ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT HEX SIGN
-    MOVE.W  (A6)+, D1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15     
+    MOVE.W  (A6)+, D1           ; TODO: CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
@@ -2443,10 +2511,12 @@ DEST_ABS_LONG:
     ;LEA     VAR_OPEN_PAREN, A1
     ;MOVE.B  #14, D0
     ;TRAP    #15                 ; PRINT OPEN PAREN
-    ;LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT HEX SIGN
-    MOVE.L  (A6)+, D1
+    LEA     VAR_HEX, A1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    MOVE.L  (A6)+, D1           ; TODO: NEED TO CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE
@@ -2464,9 +2534,11 @@ DEST_ABS_WORD:
     ;MOVE.B  #14, D0
     ;TRAP    #15                 ; PRINT OPEN PAREN
     LEA     VAR_HEX, A1
-    MOVE.B  #14, D0
-    TRAP    #15                 ; PRINT HEX SIGN
-    MOVE.W  (A6)+, D1
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15                 ; PRINT HEX SIGN
+    MOVE.W  (A6)+, D1           ; TODO: NEED TO CONVERT TO ASCII
     MOVE.B  #15, D0
     MOVE.B  #16, D2
     TRAP    #15                 ; PRINT VALUE IN HEX
@@ -2480,438 +2552,344 @@ DEST_ABS_WORD:
     
 **----------------PRINT DATA REGISTER-------------**
 PRINT_D0:
-    LEA     DATA_ZERO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_ZERO, A1       ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D1:
-    LEA     DATA_ONE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_ONE, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D2:
-    LEA     DATA_TWO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_TWO, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D3:
-    LEA     DATA_THREE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_THREE, A1      ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D4:
-    LEA     DATA_FOUR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_FOUR, A1       ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D5:
-    LEA     DATA_FIVE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_FIVE, A1       ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D6:
-    LEA     DATA_SIX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_SIX, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_D7:
-    LEA     DATA_SEVEN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     DATA_SEVEN, A1      ; LOAD A STRING TO PRINT
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 **----------------PRINT ADDRESS REGISTER-------------**
 PRINT_A0:
     LEA     ADDR_ZERO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A1:
     LEA     ADDR_ONE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A2:
     LEA     ADDR_TWO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A3:
     LEA     ADDR_THREE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A4:
     LEA     ADDR_FOUR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A5:
     LEA     ADDR_FIVE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A6:
     LEA     ADDR_SIX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
     
 PRINT_A7:
     LEA     ADDR_SEVEN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     RTS
 *----------------PRINT ADDRESS REGISTER INDIRECT-------------**
-PRINT_A0_IND:
+; IN:
+;   A1: ADDRESS OF STRING THAT HOLDS ADDRESS REGISTER VALUE TO PRINT OUT
+PRINT_A_IND:
+    MOVEA   A1, A2
     LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     ADDR_ZERO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    MOVEA   A2, A1
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    RTS
+
+PRINT_A0_IND:
+    LEA     ADDR_ZERO, A1
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A1_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_ONE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A2_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_TWO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A3_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_THREE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A4_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FOUR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A5_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FIVE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A6_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SIX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
     
 PRINT_A7_IND:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SEVEN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_IND
     RTS
 
 *----------------PRINT ADDRESS REGISTER POSTINCREMENT-------------**
-PRINT_A0_POSTINC:
+; IN:
+;   A1: ADDRESS OF STRING THAT HOLDS ADDRESS REGISTER VALUE TO PRINT OUT
+PRINT_A_POSTINC:
+    MOVEA   A1, A2
     LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     ADDR_ZERO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    MOVEA   A2, A1
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    RTS
+
+PRINT_A0_POSTINC:
+    LEA     ADDR_ZERO, A1
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A1_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_ONE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A2_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_TWO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A3_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_THREE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A4_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FOUR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A5_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FIVE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A6_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SIX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
     
 PRINT_A7_POSTINC:
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SEVEN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_PLUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_POSTINC
     RTS
 
 *----------------PRINT ADDRESS REGISTER PREDECREMENT-------------**
-PRINT_A0_PREDEC:
+; IN:
+;   A1: ADDRESS OF STRING THAT HOLDS ADDRESS REGISTER VALUE TO PRINT OUT
+PRINT_A_PREDEC:
+    MOVEA   A1, A2
     LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     ADDR_ZERO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+    MOVEA   A2, A1
+    MOVE.L  #2, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
     LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    MOVE.L  #1, D1              ; NUMBER OF BYTES TO WRITE
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+    ; MOVE.B  #14, D0
+    ; TRAP    #15
+
+    RTS
+
+PRINT_A0_PREDEC:
+    LEA     ADDR_ZERO, A1
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A1_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_ONE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A2_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_TWO, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A3_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_THREE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A4_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FOUR, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A5_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_FIVE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A6_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SIX, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
     
 PRINT_A7_PREDEC:
-    LEA     VAR_MINUS, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_OPEN_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
     LEA     ADDR_SEVEN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
-    LEA     VAR_CLOSE_PAREN, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    BSR     PRINT_A_PREDEC
     RTS
 
 **-------------------GET SIZE---------------------**
@@ -2946,47 +2924,78 @@ PRINT_SIZE3:
     BRA     INVALID
 
 PRINT_BYTE:
-    LEA     VAR_BYTE, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     VAR_BYTE, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #3, D1              ; WRITE 3 BYTES
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ;MOVE.B  #14, D0
+    ;TRAP    #15
     RTS
     
 PRINT_WORD:
-    LEA     VAR_WORD, A1
-    MOVE.B  #14, D0
-    TRAP    #15
+    LEA     VAR_WORD, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #3, D1              ; WRITE 3 BYTES
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ;MOVE.B  #14, D0
+    ;TRAP    #15
     RTS
 
 PRINT_LONG:
-    LEA     VAR_LONG, A1
-    MOVE.B  #14, D0
-    TRAP    #15    
+    LEA     VAR_LONG, A1        ; LOAD A STRING TO PRINT
+    MOVE.L  #3, D1              ; WRITE 3 BYTES
+    BSR     PRINT_TO_FILE       ; PRINT TO FILE
+
+    ;MOVE.B  #14, D0
+    ;TRAP    #15    
     RTS
-   
+
+; IN:
+;   A1: STRING TO PRINT
+;   D1: SIZE OF THE STRING IN A1 IN LONG
+; OUT:
+;   CURR_BYTE: UPDATED CURRENT BYTE LOCATION
+;   OUTPUT TO FILE (TO A FILE ID = FID)
+PRINT_TO_FILE:
+    MOVE.L  D1, D3              ; MOVE PARAMETER TO D3 AS D0,1,2 WILL BE USED
+    ; LOADING CURRENT LOC
+    MOVE.L  FID, D1             ; LOAD FID
+    MOVE.L  CURR_BYTE, D2       ; LOAD CURR LOC
+    MOVE.B  #55, D0             ; TASK 55
+    TRAP    #15                 ; SET LOC
+    ; APPEND TO FILE
+    MOVE.L  D3, D2              ; WRITE [D1] BYTES
+    MOVE.B  #54, D0             ; TASK 54
+    TRAP    #15                 ; WRITE RTS
+    ADD.L   D3, CURR_BYTE       ; ADD [D1] BYTES
+
+    RTS
+
+
 **------------------VARIABLES---------------------**
 LF  EQU  $0A                        ; Line Feed
 CR  EQU  $0D                        ; Carriage Return 
 **----------DISPLAY INSTRUCTION CONSTANTS---------**
-OPC_NOP                    DC.L        'NOP ',0      * Required OP CODE
+OPC_RTS                    DC.L        'RTS',0      * Required OP CODE
+OPC_NOP                    DC.L        'NOP',0      * Required OP CODE
 OPC_MOVE                   DC.L        'MOVE',0     * Required OP CODE   
+OPC_JSR                    DC.L        'JSR ',0     * Required OP CODE
 OPC_MOVEM                  DC.L        'MOVEM',0    * Required OP CODE
-OPC_ADD                    DC.L        'ADD',0      * Required OP CODE
-OPC_SUB                    DC.L        'SUB',0      * Required OP CODE
-OPC_MULS                   DC.L        'MULS ',0     * Required OP CODE
-OPC_DIVU                   DC.L        'DIVU ',0     * Required OP CODE
 OPC_LEA                    DC.L        'LEA ',0      * Required OP CODE
-OPC_AND                    DC.L        'AND',0      * Required OP CODE
 OPC_NOT                    DC.L        'NOT',0      * Required OP CODE
-OPC_LSL                    DC.L        'LSL',0      * Required OP CODE
-OPC_LSR                    DC.L        'LSR',0      * Required OP CODE
-OPC_ASR                    DC.L        'ASR',0      * Required OP CODE
-OPC_ASL                    DC.L        'ASL',0      * Required OP CODE
 OPC_BLT                    DC.L        'BLT ',0     * Required OP CODE
 OPC_BGE                    DC.L        'BGE ',0     * Required OP CODE
 OPC_BEQ                    DC.L        'BEQ ',0     * Required OP CODE
-OPC_JSR                    DC.L        'JSR ',0     * Required OP CODE
-OPC_RTS                    DC.L        'RTS',0      * Required OP CODE
 OPC_BRA                    DC.L        'BRA ',0     * Required OP CODE
+OPC_DIVU                   DC.L        'DIVU ',0     * Required OP CODE
+OPC_SUB                    DC.L        'SUB',0      * Required OP CODE
+OPC_MULS                   DC.L        'MULS ',0     * Required OP CODE
+OPC_AND                    DC.L        'AND',0      * Required OP CODE
+OPC_ADD                    DC.L        'ADD',0      * Required OP CODE
+OPC_LSR                    DC.L        'LSR',0      * Required OP CODE
+OPC_LSL                    DC.L        'LSL',0      * Required OP CODE
+OPC_ASR                    DC.L        'ASR',0      * Required OP CODE
+OPC_ASL                    DC.L        'ASL',0      * Required OP CODE
 
 VAR_ZERO                   DC.L        '0',0		* Symbol for printing OP code
 VAR_ONE                    DC.L        '1',0		* Symbol for printing OP code
@@ -3018,7 +3027,7 @@ VAR_CLOSE_PAREN            DC.L        ')',0		* Symbol used for formatting
 MOVEM_SLASH                DC.L        '/',0		* Symbol used for formatting
 VAR_PLUS               	   DC.L        '+',0		* Symbol used for formatting
 VAR_MINUS              	   DC.L        '-',0		* Symbol used for formatting
-VAR_COMMA                  DC.L        ',',0		* Symbol used for formatting
+VAR_COMMA                  DC.L        ', ',0		* Symbol used for formatting
 VAR_SPACE                  DC.L        ' ',0		* Symbol used for formatting
 VAR_TAB                    DC.L        '    ',0     * Symbol used for formatting
 VAR_NEW_LINE               DC.B        '',CR,LF,0   * Symbol used for formatting
@@ -3045,6 +3054,7 @@ DATA_TWO                   DC.L        'D2',0
 DATA_ONE                   DC.L        'D1',0
 DATA_ZERO                  DC.L        'D0',0
 
+OUTPUT_NAME         DC.B    'output.txt', 0
 INSTRUCTION_PROMPT  DC.B    'ENTER HEX INSTRUCTION: ',0
 ERROR               DC.B    'INPUT ERROR',CR,LF,0
 INSTRUCTION_ERROR   DC.B    'INVALID INSTRUCTION',CR,LF,0
@@ -3073,6 +3083,8 @@ INSTRUCTION         DS.W    5       ; DECLARE UP TO 5 WORDS FOR HEX INSTRUCTION
 START_ADDRESS       DS.L    1       ; DECLARE START ADDRESS
 END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 
+FID                 DS.L    1       ; FILE ID
+CURR_BYTE           DS.L    1       ; FILE CURRENT BYTES (NEXT WRITING LOCATION)
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
