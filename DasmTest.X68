@@ -128,28 +128,28 @@ tMOVEM:     MACRO
 
         ORG     $100
         
-main:   NOP                     ; PASS
-        RTS                     ; PASS
+main:   NOP                     
+        RTS                     
 
-        ONE     NOT, B          ; PASS
-        ONE     NOT, W          ; PASS
-        ONE     NOT, L          ; PASS
+        ONE     NOT, B          
+        ONE     NOT, W          
+        ONE     NOT, L          
         
-        THREE     ADD, B        ; PASS
-        THREE     ADD, W        ; PASS
-        THREE     ADD, L        ; PASS
+        THREE     ADD, B        
+        THREE     ADD, W        
+        THREE     ADD, L        
         
-        THREE     SUB, B        ; PASS
-        THREE     SUB, W        ; PASS
-        THREE     SUB, L        ; PASS
+        THREE     SUB, B        
+        THREE     SUB, W        
+        THREE     SUB, L        
         
-        THREE     AND, B        ; PASS
-        THREE     AND, W        ; PASS
-        THREE     AND, L        ; PASS
+        THREE     AND, B        
+        THREE     AND, W        
+        THREE     AND, L        
         
-        TWO     MOVE, B         ; PASS
-        TWO     MOVE, W         ; PASS
-        TWO     MOVE, L         ; PASS
+        TWO     MOVE, B         
+        TWO     MOVE, W         
+        TWO     MOVE, L         
         
         tSHIFT  LSL, B
         tSHIFT  LSL, W
@@ -167,35 +167,36 @@ main:   NOP                     ; PASS
         tSHIFT  ASR, W
         tSHIFT  ASR, L 
         
-        tLEA                   ; PASS
+        tLEA                   
         
-        tMULDIV MULS, W        ; PASS
-        tMULDIV DIVU, W        ; PASS
+        tMULDIV MULS, W        
+        tMULDIV DIVU, W        
 
-        JSR     (A1)           ; PASS
-        JSR     $1234          ; PASS
-        JSR     $12345678      ; PASS
+        JSR     (A1)           
+        JSR     $1234          
+        JSR     $12345678      
         
-L1:     BLT     L1             ; PASS
-        BLT     $12            ; PASS
-        BLT     $1234          ; PASS
+L1:     BLT     L1             
+        BLT     $12            
+        BLT     $1234          
 
-L2:     BGE     L2             ; PASS
-        BGE     $1234          ; PASS
+L2:     BGE     L2             
+        BGE     $1234          
         
-L3:     BEQ     L3             ; PASS
-        BEQ     $1234          ; PASS
+L3:     BEQ     L3             
+        BEQ     $1234          
         
-L4:     BRA.B   L4             ; PASS
-        BRA.W   $12            ; PASS
-        BRA.W   $1234          ; PASS
+L4:     BRA.B   L4             
+        BRA.W   $12            
+        BRA.W   $1234          
         
-        tMOVEM                  ; PASS
+        tMOVEM                  
 
         SIMHALT 
         END     main  
 
     
+
 
 
 
