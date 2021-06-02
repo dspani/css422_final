@@ -2382,101 +2382,101 @@ DEST_ABS_WORD:          ; PRINT ABSOLUTE WORD VALUE
 PRINT_D0:
     LEA     DATA_ZERO, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D0
     RTS
     
 PRINT_D1:
     LEA     DATA_ONE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D1
     RTS
     
 PRINT_D2:
     LEA     DATA_TWO, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D2
     RTS
     
 PRINT_D3:
     LEA     DATA_THREE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D3
     RTS
     
 PRINT_D4:
     LEA     DATA_FOUR, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D4
     RTS
     
 PRINT_D5:
     LEA     DATA_FIVE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D5
     RTS
     
 PRINT_D6:
     LEA     DATA_SIX, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D6
     RTS
     
 PRINT_D7:
     LEA     DATA_SEVEN, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT DATA REGISTER D7
     RTS
     
 **----------------PRINT ADDRESS REGISTER-------------**
 PRINT_A0:
     LEA     ADDR_ZERO, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A0
     RTS
     
 PRINT_A1:
     LEA     ADDR_ONE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A1
     RTS
     
 PRINT_A2:
     LEA     ADDR_TWO, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A2
     RTS
     
 PRINT_A3:
     LEA     ADDR_THREE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A3
     RTS
     
 PRINT_A4:
     LEA     ADDR_FOUR, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A4
     RTS
     
 PRINT_A5:
     LEA     ADDR_FIVE, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A5
     RTS
     
 PRINT_A6:
     LEA     ADDR_SIX, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A6
     RTS
     
 PRINT_A7:
     LEA     ADDR_SEVEN, A1
     MOVE.B  #14, D0
-    TRAP    #15
+    TRAP    #15                 ; PRINT ADDRESS REGISTER A7
     RTS
 *----------------PRINT ADDRESS REGISTER INDIRECT-------------**
-PRINT_A0_IND:
+PRINT_A0_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A0
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2488,7 +2488,7 @@ PRINT_A0_IND:
     TRAP    #15
     RTS
     
-PRINT_A1_IND:
+PRINT_A1_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A1
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2500,7 +2500,7 @@ PRINT_A1_IND:
     TRAP    #15
     RTS
     
-PRINT_A2_IND:
+PRINT_A2_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A2
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2512,7 +2512,7 @@ PRINT_A2_IND:
     TRAP    #15
     RTS
     
-PRINT_A3_IND:
+PRINT_A3_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A3
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2524,7 +2524,7 @@ PRINT_A3_IND:
     TRAP    #15
     RTS
     
-PRINT_A4_IND:
+PRINT_A4_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A4
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2536,7 +2536,7 @@ PRINT_A4_IND:
     TRAP    #15
     RTS
     
-PRINT_A5_IND:
+PRINT_A5_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A5
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2548,7 +2548,7 @@ PRINT_A5_IND:
     TRAP    #15
     RTS
     
-PRINT_A6_IND:
+PRINT_A6_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A6
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2560,7 +2560,7 @@ PRINT_A6_IND:
     TRAP    #15
     RTS
     
-PRINT_A7_IND:
+PRINT_A7_IND:                  ; PRINT ADDRESS REGISTER INDIRECT A7
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2573,7 +2573,7 @@ PRINT_A7_IND:
     RTS
 
 *----------------PRINT ADDRESS REGISTER POSTINCREMENT-------------**
-PRINT_A0_POSTINC:
+PRINT_A0_POSTINC:                  ; PRINT ADDRESS REGISTER A0 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2588,7 +2588,7 @@ PRINT_A0_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A1_POSTINC:
+PRINT_A1_POSTINC:                  ; PRINT ADDRESS REGISTER A1 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2603,7 +2603,7 @@ PRINT_A1_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A2_POSTINC:
+PRINT_A2_POSTINC:                  ; PRINT ADDRESS REGISTER A2 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2618,7 +2618,7 @@ PRINT_A2_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A3_POSTINC:
+PRINT_A3_POSTINC:                  ; PRINT ADDRESS REGISTER A3 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2633,7 +2633,7 @@ PRINT_A3_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A4_POSTINC:
+PRINT_A4_POSTINC:                  ; PRINT ADDRESS REGISTER A4 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2648,7 +2648,7 @@ PRINT_A4_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A5_POSTINC:
+PRINT_A5_POSTINC:                  ; PRINT ADDRESS REGISTER A5 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2663,7 +2663,7 @@ PRINT_A5_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A6_POSTINC:
+PRINT_A6_POSTINC:                  ; PRINT ADDRESS REGISTER A6 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2678,7 +2678,7 @@ PRINT_A6_POSTINC:
     TRAP    #15
     RTS
     
-PRINT_A7_POSTINC:
+PRINT_A7_POSTINC:                  ; PRINT ADDRESS REGISTER A7 POST-INCREMENT
     LEA     VAR_OPEN_PAREN, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2694,7 +2694,7 @@ PRINT_A7_POSTINC:
     RTS
 
 *----------------PRINT ADDRESS REGISTER PREDECREMENT-------------**
-PRINT_A0_PREDEC:
+PRINT_A0_PREDEC:                  ; PRINT ADDRESS REGISTER A0 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2709,7 +2709,7 @@ PRINT_A0_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A1_PREDEC:
+PRINT_A1_PREDEC:                  ; PRINT ADDRESS REGISTER A1 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2724,7 +2724,7 @@ PRINT_A1_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A2_PREDEC:
+PRINT_A2_PREDEC:                  ; PRINT ADDRESS REGISTER A2 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2739,7 +2739,7 @@ PRINT_A2_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A3_PREDEC:
+PRINT_A3_PREDEC:                  ; PRINT ADDRESS REGISTER A3 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2754,7 +2754,7 @@ PRINT_A3_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A4_PREDEC:
+PRINT_A4_PREDEC:                  ; PRINT ADDRESS REGISTER A4 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2769,7 +2769,7 @@ PRINT_A4_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A5_PREDEC:
+PRINT_A5_PREDEC:                  ; PRINT ADDRESS REGISTER A5 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2784,7 +2784,7 @@ PRINT_A5_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A6_PREDEC:
+PRINT_A6_PREDEC:                  ; PRINT ADDRESS REGISTER A6 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2799,7 +2799,7 @@ PRINT_A6_PREDEC:
     TRAP    #15
     RTS
     
-PRINT_A7_PREDEC:
+PRINT_A7_PREDEC:                  ; PRINT ADDRESS REGISTER A7 PRE-DECREMENT
     LEA     VAR_MINUS, A1
     MOVE.B  #14, D0
     TRAP    #15
@@ -2976,6 +2976,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
