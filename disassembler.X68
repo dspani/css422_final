@@ -1407,16 +1407,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A7_DA        
     END_A7_DA:                 
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_0_DA   
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_0_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH   
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_0_DA:
-    SUB.B   #1, D2           
-    MOVE.B  #$00, D4
+    SKIP_SLASH_0_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER            
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000000000000010, D6
@@ -1424,16 +1424,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A6_DA
     END_A6_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_1_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_1_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_1_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_1_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     
     MOVE.W  D5, D6
@@ -1442,16 +1442,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A5_DA
     END_A5_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_2_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_2_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_2_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_2_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER 
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
     
     MOVE.W  D5, D6
     AND.W   #%0000000000001000, D6
@@ -1459,16 +1459,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A4_DA
     END_A4_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_3_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_3_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_3_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_3_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
     
     MOVE.W  D5, D6
     AND.W   #%0000000000010000, D6
@@ -1476,16 +1476,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A3_DA
     END_A3_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_4_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_4_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_4_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_4_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER   
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000000000100000, D6
@@ -1493,16 +1493,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A2_DA
     END_A2_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_5_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_5_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_5_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_5_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER   
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000000001000000, D6
@@ -1510,16 +1510,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A1_DA
     END_A1_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_6_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_6_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_6_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_6_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6    
     AND.W   #%0000000010000000, D6
@@ -1527,16 +1527,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_A0_DA
     END_A0_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_7_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_7_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_7_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_7_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER 
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000000100000000, D6
@@ -1544,16 +1544,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D7_DA       
     END_D7_DA:                 
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_8_DA   
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_8_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH    
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_8_DA: 
-    SUB.B   #1, D2           
-    MOVE.B  #$00, D4
+    SKIP_SLASH_8_DA:                    ; TAG TO SKIP SLASH 
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER            
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000001000000000, D6
@@ -1561,16 +1561,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D6_DA
     END_D6_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_9_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_9_DA             ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_9_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_9_DA:                    ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000010000000000, D6
@@ -1578,16 +1578,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D5_DA
     END_D5_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_10_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_10_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_10_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_10_DA:                   ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0000100000000000, D6
@@ -1595,16 +1595,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D4_DA
     END_D4_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_11_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_11_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_11_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_11_DA:                   ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER 
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
     
     MOVE.W  D5, D6
     AND.W   #%0001000000000000, D6
@@ -1612,16 +1612,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D3_DA
     END_D3_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_12_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_12_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_12_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_12_DA:                   ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0010000000000000, D6
@@ -1629,16 +1629,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D2_DA
     END_D2_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_13_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_13_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_13_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D1
+    SKIP_SLASH_13_DA:                   ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D1                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6
     AND.W   #%0100000000000000, D6
@@ -1646,16 +1646,16 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D1_DA
     END_D1_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_14_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_14_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_14_DA:
-    SUB.B   #1, D2 
-    MOVE.B  #$00, D4
+    SKIP_SLASH_14_DA:                   ; TAG TO SKIP SLASH
+    SUB.B   #1, D2                      ; DECREMENT 1 FROM LAST REGISTER POSITION COUNTER  
+    MOVE.B  #$00, D4                    ; RESET REGISTER PRINTED? REGISTER
 
     MOVE.W  D5, D6    
     AND.W   #%1000000000000000, D6
@@ -1663,14 +1663,14 @@ DA_LIST_MASK:   ; PREDECREMENT MODE
     BEQ     MOVEM_D0_DA
     END_D0_DA:
     
-    CMP.B   #$00, D4
-    BEQ     SKIP_SLASH_15_DA
+    CMP.B   #$00, D4                    ; CHECK IF LAST REGISTER WAS PRINTED
+    BEQ     SKIP_SLASH_15_DA            ; IF NOT PRINTED, SKIP PRINTING SLASH 
     CMP.B   #$00, D2
-    BEQ     END_MASK
-    LEA     MOVEM_SLASH, A1
+    BEQ     END_MASK                    ; IF LAST REGISTER, SKIP PRINTING SLASH AND END LIST MASK
+    LEA     MOVEM_SLASH, A1             ; PRINT SLASH
     MOVE.B  #14, D0
     TRAP    #15
-    SKIP_SLASH_15_DA:
+    SKIP_SLASH_15_DA:                    ; TAG TO SKIP SLASH
     END_MASK_DA:
     RTS
 
