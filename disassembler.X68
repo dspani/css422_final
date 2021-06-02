@@ -299,6 +299,8 @@ MAIN:                               ; MAIN LOOP
     MOVE.L  (END_ADDRESS), A5
     CMP.L   A5, A6
     BGE     END_DISASSEMBLY         ; END IF CURRENT ADDRESS GREATER OR EQUAL TO END ADDRESS
+    BSR     PRINT_ADDRESS
+    BSR     PRINT_NEWLINE
     MOVE.W  (A6)+, D7               ; DEREFERENCE WORD INSTRUCTION FROM POINTER TO CURRENT INSTRUCTION (A6)
     CMP.W   #$FFFF, D7
     BEQ     END_DISASSEMBLY         ; END IF INSTRUCTION = #$FFFF
@@ -307,6 +309,12 @@ MAIN:                               ; MAIN LOOP
       
     BRA     MAIN                    ; RESTART LOOP
     
+PRINT_ADDRESS:
+    MOVE.B  #15, D0
+    MOVE.W  A6, D1
+    MOVE.B  #16, D2
+    TRAP    #15
+    RTS
 **------------------END MAIN LOOP----------------**  
 END_DISASSEMBLY:
     SIMHALT
@@ -2968,6 +2976,7 @@ END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 TEST_VAR_1          DS.L    1       ; FOR TESTING          
 TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
+
 
 
 
