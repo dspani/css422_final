@@ -11,6 +11,31 @@ START:
     BSR     INPUT_END_ADDRESS                
     BRA     MAIN    ; START DISASSEMBLY
 
+**------------------BEGIN MAIN LOOP----------------**  
+MAIN:                               ; MAIN LOOP    
+    MOVE.L  (END_ADDRESS), A5
+    CMP.L   A5, A6
+    BGE     END_DISASSEMBLY         ; END IF CURRENT ADDRESS GREATER OR EQUAL TO END ADDRESS
+    BSR     PRINT_ADDRESS
+    MOVE.W  (A6)+, D7               ; DEREFERENCE WORD INSTRUCTION FROM POINTER TO CURRENT INSTRUCTION (A6)
+    CMP.W   #$FFFF, D7
+    BEQ     END_DISASSEMBLY         ; END IF INSTRUCTION = #$FFFF
+    BSR     MATCH_INSTRUCTION
+    BSR     CLEAR_INSTRUCTION_MEMORY       ; CLEAR MEMORY OF INSTRUCTION
+      
+    BRA     MAIN                    ; RESTART LOOP
+    
+PRINT_ADDRESS:  ; PRINT CURRENT ADDRESS IN A6 FOLLOWED BY A TAB
+    MOVE.W  A6, D1
+    BSR     HEX_A                   ; CONVERT D1 TO HEX VALUE AND PRINT
+    LEA     VAR_TAB, A1
+    MOVE.B  #14, D0
+    TRAP    #15                     ; PRINT CURRENT ADDRESS STRING
+    RTS
+**------------------END MAIN LOOP----------------**  
+END_DISASSEMBLY:
+    SIMHALT
+
 
 **--------GET INSTRUCTION FROM USER---------**
 GET_INSTRUCTION:        ; GET INSTRUCTION FROM USER
@@ -123,6 +148,8 @@ INPUT_END_ADDRESS:
     BSR     ASCII_TO_HEX            ; CONVERT 8 DIGIT ASCII ADDRESS TO HEX
     RTS
 **------------END GET ADDRESSING------------**
+
+**------------------START OF APIs----------------** 
 **--------------GET NYBBLE----------------**
 ;-------------------------------------
 ; ** GET FIRST NYBBLE
@@ -133,8 +160,6 @@ INPUT_END_ADDRESS:
 ; D1:
 ;   D1 SAVES TO FIRST_FOUR_NYBBLE
 ;------------------------------------
-
-**------------------START OF APIs----------------** 
 GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS 
 
     MOVE.W  #$F000, D2  ; mask = $F000
@@ -144,6 +169,31 @@ GET_FIRST_NYBBLE:           ; RETURN FIRST FOUR BITS
     LSR.W   #4, D1
 
     MOVE.B  D1, FIRST_FOUR_NYBBLE   
+    
+*---------------------------------------------------------------------------------
+* Subroutine for printing D1.L in hex, with leading zeros at the front:
+*---------------------------------------------------------------------------------
+HEX_A:  MOVE.W  #0, -(A7) ; Push a null termination for the string to be printed.
+        MOVEA.L A7, A1    ; Initialize A1 to the current value of stack pointer.
+        SUBA.L  #8, A7    ; Reserve space for 8 more bytes on the stack.
+        MOVE.L  D1, D0    ; Copy source value into D0, so that D1 is preserved.
+HEX_1A: MOVE.B  D0, D2    ; Beginning of the loop; copy the current byte into D2.
+        ANDI.B  #$F, D2   ; Apply a mask to isolate the current hex digit.
+        CMP.B   #$9, D2   ; Compare the current hex value to $9.
+        BLE     HEX_2A    ; If value is between $0 and $9, skip the next line.
+        ADDI.B  #7, D2    ; If value is above $9, add an extra 7 to its ASCII.
+HEX_2A: ADDI.B  #48, D2   ; Add 48 to get ASCII code of the current hex digit.
+        SUBA.L  #1, A1    ; Shift the address pointer back by one byte.
+        MOVE.B  D2, (A1)  ; Copy ASCII value of the current digit to the stack.
+        LSR.L   #4, D0    ; Shift the remainder to the right by one hex digit.
+        CMPA.L  A7, A1    ; Compare A1 to the target value of the stack pointer.
+        BGT     HEX_1A    ; If A1 is not yet at A7, loop to get the next digit.
+        MOVE.L  #14, D0   ; Task ID #14 for printing a null-terminated string.
+        TRAP    #15       ; Print the hex string equivalent of the source value.
+        ADDA.L  #10, A7   ; Point the stack pointer back at the return address.
+        RTS               ; Exit the subroutine
+*---------------------------------------------------------------------------------
+
 ;-------------------------------------
 ; ** MATCH INSTRUCTION AND BRANCHING TO THE SPECIFIDE INSTRUCTION BRANCH
 ; LOOKING FOR CONSTANT X BITS TO MATCH WITH INSTRUCTION OP CODE
@@ -292,32 +342,6 @@ GET_BITS:
     GET_BITS_END:
     RTS                             ; HELPER FUNCTION
 **------------------END OF APIs----------------**  
-
-
-**------------------BEGIN MAIN LOOP----------------**  
-MAIN:                               ; MAIN LOOP    
-    MOVE.L  (END_ADDRESS), A5
-    CMP.L   A5, A6
-    BGE     END_DISASSEMBLY         ; END IF CURRENT ADDRESS GREATER OR EQUAL TO END ADDRESS
-    BSR     PRINT_ADDRESS
-    BSR     PRINT_NEWLINE
-    MOVE.W  (A6)+, D7               ; DEREFERENCE WORD INSTRUCTION FROM POINTER TO CURRENT INSTRUCTION (A6)
-    CMP.W   #$FFFF, D7
-    BEQ     END_DISASSEMBLY         ; END IF INSTRUCTION = #$FFFF
-    BSR     MATCH_INSTRUCTION
-    BSR     CLEAR_INSTRUCTION_MEMORY       ; CLEAR MEMORY OF INSTRUCTION
-      
-    BRA     MAIN                    ; RESTART LOOP
-    
-PRINT_ADDRESS:
-    MOVE.B  #15, D0
-    MOVE.W  A6, D1
-    MOVE.B  #16, D2
-    TRAP    #15
-    RTS
-**------------------END MAIN LOOP----------------**  
-END_DISASSEMBLY:
-    SIMHALT
 
 CLEAR_INSTRUCTION_MEMORY:           ; CLEAR ALL PREVIOUSLY USED MEMORY
     LEA     INSTRUCTION, A1         
@@ -892,9 +916,7 @@ PRINT_SHIFT_COUNT:
     MOVE.B  (COUNT_REGISTER),D1
     CMP.B   #$00,D1
     BEQ     PRINT_SHIFT_COUNT_EIGHT
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15
+    BSR     HEX_A
     RTS
 
 
@@ -1053,9 +1075,7 @@ PRINT_SLASH:
 ** PRINT THE VALUE IN D1 IN BASE 16
 ** USED FOR PRINTING IMMEDIATE VALUES OR ADDRESSES
 PRINT_BASE16:
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15
+    BSR     HEX_A
     RTS
     
 **-----------GET DIRECTION FOR ADD, AND, SUB-----**
@@ -1964,29 +1984,23 @@ PRINT_BYTE_DISPLACEMENT:        ; PRINT BYTE DISPLACEMENT FROM OPCODE
     MOVE.B  #14, D0
     TRAP    #15
     MOVE.B  (DISPLACEMENT), D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT IN BASE 16
+    BSR     HEX_A
     RTS
     
 PRINT_WORD_DISPLACEMENT:        ; GET WORD DISPLACEMENT FROM MEMORY, PRINT WORD
     LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15
-    MOVE.W (A6)+,D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT IN BASE 16
+    MOVE.W  (A6)+,D1
+    BSR     HEX_A
     RTS
     
 PRINT_LONG_DISPLACEMENT:        ; GET LONG DISPLACEMENT FROM MEMORY, PRINT LONG
     LEA     VAR_HEX, A1
     MOVE.B  #14, D0
     TRAP    #15
-    MOVE.L (A6)+,D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2             ; PRINT IN BASE 16
-    TRAP    #15 
+    MOVE.L  (A6)+,D1
+    BSR     HEX_A
     RTS
 
 **-------------------GET MODE---------------------**
@@ -2168,9 +2182,7 @@ IMMEDIATE_BYTE:             ; PRINT IMMEDIATE WORD IF IMMEDIATE BYTE USED
     MOVE.B  #14, D0
     TRAP    #15             ; PRINT "$"
     MOVE.W  (A6)+, D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15             ; PRINT WORD VALUE
+    BSR     HEX_A
     RTS
 
 IMMEDIATE_WORD:             ; PRINT IMMEDIATE WORD VALUE
@@ -2182,9 +2194,7 @@ IMMEDIATE_WORD:             ; PRINT IMMEDIATE WORD VALUE
     MOVE.B  #14, D0
     TRAP    #15             ; PRINT "$"
     MOVE.W  (A6)+, D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15
+    BSR     HEX_A
     RTS
 
 IMMEDIATE_LONG:             ; PRINT IMMEDIATE LONG VALUE
@@ -2195,9 +2205,7 @@ IMMEDIATE_LONG:             ; PRINT IMMEDIATE LONG VALUE
     MOVE.B  #14, D0
     TRAP    #15             ; PRINT "$"
     MOVE.L  (A6)+, D1
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15
+    BSR     HEX_A
     RTS
 
 SOURCE_ABS_LONG:            ; PRINT ABSOLUTE LONG VALUE
@@ -2206,9 +2214,7 @@ SOURCE_ABS_LONG:            ; PRINT ABSOLUTE LONG VALUE
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
     MOVE.L  (A6)+, D1           ; DEREFERENCE NEXT MEMORY ADDRESS
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT VALUE IN HEX
+    BSR     HEX_A
     RTS
     
 SOURCE_ABS_WORD:            ; PRINT ABSOLUTE WORD VALUE
@@ -2217,9 +2223,7 @@ SOURCE_ABS_WORD:            ; PRINT ABSOLUTE WORD VALUE
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
     MOVE.W  (A6)+, D1           ; DEREFERENCE NEXT MEMORY ADDRESS
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT VALUE IN HEX
+    BSR     HEX_A
     RTS
     
 **-------------------GET MODE---------------------**
@@ -2362,9 +2366,7 @@ DEST_ABS_LONG:          ; PRINT ABSOLUTE LONG VALUE
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
     MOVE.L  (A6)+, D1           ; DEREFERENCE NEXT LONG IN MEMORY
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT VALUE
+    BSR     HEX_A
     RTS
     
 DEST_ABS_WORD:          ; PRINT ABSOLUTE WORD VALUE
@@ -2373,9 +2375,7 @@ DEST_ABS_WORD:          ; PRINT ABSOLUTE WORD VALUE
     MOVE.B  #14, D0
     TRAP    #15                 ; PRINT HEX SIGN
     MOVE.W  (A6)+, D1           ; DEREFERENCE NEXT WORD IN MEMORY
-    MOVE.B  #15, D0
-    MOVE.B  #16, D2
-    TRAP    #15                 ; PRINT VALUE IN HEX
+    BSR     HEX_A
     RTS
     
 **----------------PRINT DATA REGISTER-------------**
@@ -2950,8 +2950,6 @@ ERROR               DC.B    'INPUT ERROR',CR,LF,0
 INSTRUCTION_ERROR   DC.B    'INVALID INSTRUCTION',CR,LF,0
 GET_START_ADDRESS   DC.B    'ENTER START ADDRESS IN LONG HEX FORMAT: ',0
 GET_END_ADDRESS     DC.B    'ENTER END ADDRESS IN LONG HEX FORMAT: ',0
-TEST_FAIL           DC.B    'ASSERT FAILED: ',0           
-TEST_SUCC           DC.B    'ASSERT SUCCESSFUL: ',0
 
 **-------------------MEMORY FOR OPCODE DECOMPOSITION----------------**
 FIRST_FOUR_NYBBLE   DS.B    1       ; DECLARE 1 BYTE FOR FIRST NYBBLE
@@ -2973,29 +2971,7 @@ INSTRUCTION         DS.W    5       ; DECLARE UP TO 5 WORDS FOR HEX INSTRUCTION
 START_ADDRESS       DS.L    1       ; DECLARE START ADDRESS
 END_ADDRESS         DS.L    1       ; DECLARE END ADDRESS
 
-TEST_VAR_1          DS.L    1       ; FOR TESTING          
-TEST_VAR_2          DS.L    1       ; FOR TESTING
     END    START        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 *~Font name~Courier New~
 *~Font size~12~
 *~Tab type~1~
